@@ -8,6 +8,9 @@ import json
 def home(request):
     return render_to_response('graph/index.html', {}, context_instance=RequestContext(request))
 
+def graph(request):
+    return render_to_response('graph/graph.html', {}, context_instance=RequestContext(request))
+
 def data(request):
     _l = []
     for i in []:
