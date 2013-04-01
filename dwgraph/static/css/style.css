@@ -1,0 +1,13 @@
+.hack {
+    color: #a9e100;
+}
+
+#map {
+	height: 400px;
+	width: 100%;
+}
+
+h2 {
+    font-family: sans-serif;
+    font-size: 1.5em;
+}

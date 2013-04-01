@@ -6,7 +6,7 @@ from django.conf.urls import patterns, include, url
 
 urlpatterns = patterns('',
     # Examples:
-    # url(r'^$', 'dwgraph.views.home', name='home'),
+    url(r'^$', 'graph.views.home', name='home'),
     # url(r'^dwgraph/', include('dwgraph.foo.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:
