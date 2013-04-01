@@ -5,7 +5,20 @@
         <h1>How did you do?</h1>
         <p>Enter a boat number to get started</p>
         <input type="text" name="bn" value="" />
-        <p><a href="submit/" class="btn btn-primary btn-large">Show me &raquo;</a></p>
+        <p><a href="#" class="btn btn-primary btn-large" id="submit-btn">Show me &raquo;</a></p>
       </div>
+<script>
+// Create a YUI sandbox on your page.
+YUI().use('node', 'event', function (Y) {
+    Y.one("#submit-btn").on("click", function(e) {
+        // Stop the event's default behavior
+        e.preventDefault();
 
+        // Stop the event from bubbling up the DOM tree
+        e.stopPropagation();
+
+        window.location = window.location.protocol + "//" + window.location.host + "/graph?bn=" + Y.one("input").get("value");
+    });
+});
+</script>
 {% endblock content %}
