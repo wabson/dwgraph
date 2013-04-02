@@ -33,6 +33,7 @@ google.load('visualization', '1.0', {'packages':['corechart', 'table']});
               <input id="input-bn" type="text" placeholder="Boat Number">
               <button id="add-form-btn" type="submit" class="btn">Add</button>
             </form>
+<div class="messages"></div>
 <div class="social">
 <div class="fb-like" data-send="false" data-layout="button_count" data-width="450" data-show-faces="true"></div>
 <a href="https://twitter.com/share" class="twitter-share-button" data-lang="en">Tweet</a>
@@ -105,7 +106,7 @@ function redrawChart() {
                     var chartOptions = {
                         'vAxis': {'title': 'Speed (mph)'},
                         'hAxis': {'title': 'Location'},
-                        'width': 800,
+                        'width': 1168, // container is 1170 but the graph has 1px border each side
                         'height': 450,
                         //'isStacked': true,
                         'titlePosition': 'none'
@@ -117,18 +118,33 @@ function redrawChart() {
                         rows.push({c: row})
                     }
 
-    YUI().use('node', 'event', 'datasource', 'history', function (Y) {
+    YUI().use('node', 'event', 'event-key', 'datasource', 'history', function (Y) {
+
+        var history = new Y.HistoryHash({
+            initialState: {
+                bn: ""
+            }
+        });
 
         var locationsDataSource = new Y.DataSource.Get({
             source: "/data"
         });
 
-    function addSeries(num) {
-       locationsDataSource.sendRequest({
+        function addSeries(num) {
+          var allAdded = true, numbers = num.split(',');
+          Y.Array.each((num||'').split(','), function(item, index, arr) {
+            if (!isBoatAdded(item)) {
+                allAdded = false;
+            }
+         });
+         if (allAdded) {
+            return;
+         }
+         locationsDataSource.sendRequest({
             request: "?bn=" + encodeURIComponent(num),
             on: {
                 success: function(e) {
-                    var results = e.data.results;
+                    var results = e.data.results, messages = "";
                     Y.log("API returned " + results.length + " results");
                     for (var i=0; i<results.length; i++) {
                         if (!isBoatAdded(results[i].boat_number)) {
@@ -144,7 +160,22 @@ function redrawChart() {
                     Y.log(cols);
                     Y.log(rows);
     
-                    chart.draw(chartData, chartOptions);
+                    if (cols.length > 1) {
+                        chart.draw(chartData, chartOptions);
+                    }
+                    
+                    var newBn = ''; // Remove boats which were not returned by the XHR
+                    Y.Array.each(numbers, function(item, index, arr) {
+                        if (isBoatAdded(item)) {
+                            newBn += isBoatAdded(item) ? (',' + item) : '';
+                        } else {
+                            messages += '<p class="text-error">Boat number ' + item + ' could not be found</p>';
+                        }
+                    });
+                    Y.one(".messages").setHTML(messages);
+                    if (newBn.slice(1) != history.get('bn')) {
+                        history.replaceValue('bn', newBn.slice(1));
+                    }
                 },
                 failure: function(e) {
                     alert(e.error.message);
@@ -152,20 +183,10 @@ function redrawChart() {
             }
         });
     }
-        var history = new Y.HistoryHash({
-            initialState: {
-                bn: ""
-            }
-        });
         Y.on('history:change', function (e) {
             var selected = (history.get('bn') || '').split(','), displayed = getBoatSeries();
             for (var i=0; i<displayed.length; i++) {
-               var isSelected = false;
-               for (var j=0; j<selected.length; j++) {
-                   if (displayed[i] == selected[j]) {
-                       isSelected = true;
-                   }
-               }
+               var isSelected = Y.Array.indexOf(selected, displayed[i]) > -1;
                if (!isSelected) {
                    Y.log("Removing " + displayed[i]);
                    removeBoat(displayed[i]);
@@ -174,13 +195,21 @@ function redrawChart() {
             addSeries(history.get('bn'));
         });
         addSeries(history.get('bn'));
-        Y.one("#add-form-btn").on("click", function(e) {
+
+        function onAddClick(e) {
+            e.preventDefault();
+            e.stopPropagation();
             var bn = Y.one("#input-bn").get("value");
             if (bn && !isBoatAdded(parseInt(bn, 10))) {
-                history.addValue('bn', history.get('bn') + ',' + bn);
+                var oldVal = history.get('bn');
+                history.addValue('bn', oldVal + (oldVal != '' ? ',' : '') + bn);
             }
             Y.one("#input-bn").set("value", "");
-        });
+        }
+
+        Y.one("#add-form-btn").on("click", onAddClick);
+        Y.one("#input-bn").on("key", onAddClick, "enter");
+        Y.one("#input-bn").focus();
     });
 </script>
 {% endblock content %}

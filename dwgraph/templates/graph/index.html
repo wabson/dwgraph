@@ -10,28 +10,28 @@
         <form>
         <p>Enter a boat number to get started</p>
         <input type="text" name="bn" value="" placeholder="Boat Number" /><br />
-        <button type="button" class="btn btn-primary btn-large" id="submit-btn" disabled>Show Graph &raquo;</button>
+        <button type="button" class="btn btn-primary btn-large" id="submit-btn">Show Graph &raquo;</button>
         </form>
       </div>
 <script>
 // Create a YUI sandbox on your page.
-YUI().use('node', 'event', function (Y) {
-    Y.one("#submit-btn").set("disabled", Y.one("input").get("value") == "");
-    Y.one("#submit-btn").on("click", function(e) {
-        // Stop the event's default behavior
-        e.preventDefault();
-        // Stop the event from bubbling up the DOM tree
-        e.stopPropagation();
+YUI().use('node', 'event', 'event-key', function (Y) {
+    function loadGraph(e) {
         var bn = Y.one("input").get("value");
-        if (!this.get("disabled")) {
+        if (bn) {
             window.location = window.location.protocol + "//" + window.location.host + "/graph#bn=" + bn;
         }
-    });
-    Y.one("input").on("keyup", function(e) {
-        Y.one("#submit-btn").set("disabled", this.get("value") == "");
-    });
-    Y.one("input").on("click", function(e) {
-        Y.one("#submit-btn").set("disabled", this.get("value") == "");
+    }
+    Y.one("input").focus();
+    Y.one("input").on("key", function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        loadGraph(e);
+    }, 'enter');
+    Y.one("#submit-btn").on("click", function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        loadGraph(e);
     });
 });
 </script>

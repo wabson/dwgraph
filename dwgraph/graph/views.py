@@ -111,8 +111,11 @@ def data(request):
     boat_nums = request.GET.get('bn', '0').split(',')
     cb = request.GET.get('callback', 'callback')
     cursor = connections['data'].cursor()
-    query = "select locations.*, firstname_1, firstname_2, surname_1, surname_2, club_1, club_2, class_position as position, elapsed_time from locations JOIN class_results on locations.boat_number=class_results.boat_number and locations.year=class_results.year where class_results.year = '%s' and class_results.boat_number IN (%s)" % (int(year), '%s' % (int(boat_nums[0])) + ' '.join([(", %s" % int(bn)) for bn in boat_nums[1:]]))
-    cursor.execute(query);
+    try:
+        query = "select locations.*, firstname_1, firstname_2, surname_1, surname_2, club_1, club_2, class_position as position, elapsed_time from locations JOIN class_results on locations.boat_number=class_results.boat_number and locations.year=class_results.year where class_results.year = '%s' and class_results.boat_number IN (%s)" % (int(year), '%s' % (int(boat_nums[0])) + ' '.join([(", %s" % int(bn)) for bn in boat_nums[1:]]))
+        cursor.execute(query);
+    except ValueError, e:
+        pass
     _d = {}
     if (True):
         rows = dictfetchall(cursor)
