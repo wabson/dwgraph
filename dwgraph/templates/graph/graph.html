@@ -6,18 +6,21 @@
 // Load the Visualization API and the piechart package.
 google.load('visualization', '1.0', {'packages':['corechart', 'table']});
 </script>
+<style type="text/css">
+#graph svg {
+    border: 1px dashed #666;
+}
+</style>
 <title>The DW Graph</title>
 {% endblock header %}
 
 {% block content %}
     <h1>Here's how you did!</h1>
-    <div>
-            <form class="add-form">
+            <form class="add-form form-inline">
               <label for="input-bn">Add a crew:</label>
               <input id="input-bn" type="text" placeholder="Boat Number">
               <button id="add-form-btn" type="submit" class="btn">Add</button>
             </form>
-    </div>
     <div id="graph"></div>
 <script>
 var checkpoints = [
