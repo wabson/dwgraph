@@ -1,23 +1,33 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <div class="span12">
+    <div class="hero-unit">
         <h1>How did you do?</h1>
+        <form>
         <p>Enter a boat number to get started</p>
-        <input type="text" name="bn" value="" />
-        <p><a href="#" class="btn btn-primary btn-large" id="submit-btn">Show me &raquo;</a></p>
+        <input type="text" name="bn" value="" /><br />
+        <button type="button" class="btn btn-primary btn-large" id="submit-btn" disabled>Show Graph &raquo;</button>
+        </form>
       </div>
 <script>
 // Create a YUI sandbox on your page.
 YUI().use('node', 'event', function (Y) {
+    Y.one("#submit-btn").set("disabled", Y.one("input").get("value") == "");
     Y.one("#submit-btn").on("click", function(e) {
         // Stop the event's default behavior
         e.preventDefault();
-
         // Stop the event from bubbling up the DOM tree
         e.stopPropagation();
-
-        window.location = window.location.protocol + "//" + window.location.host + "/graph#bn=" + Y.one("input").get("value");
+        var bn = Y.one("input").get("value");
+        if (!this.get("disabled")) {
+            window.location = window.location.protocol + "//" + window.location.host + "/graph#bn=" + bn;
+        }
+    });
+    Y.one("input").on("keyup", function(e) {
+        Y.one("#submit-btn").set("disabled", this.get("value") == "");
+    });
+    Y.one("input").on("click", function(e) {
+        Y.one("#submit-btn").set("disabled", this.get("value") == "");
     });
 });
 </script>
