@@ -1,11 +1,166 @@
 {% extends "base.html" %}
 
 {% block header %}
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type="text/javascript">
+// Load the Visualization API and the piechart package.
+google.load('visualization', '1.0', {'packages':['corechart', 'table']});
+</script>
+<title>The DW Graph</title>
 {% endblock header %}
 
 {% block content %}
-    <div class="span12">
-        <h5>How you did</h5>
+    <h1>Here's how you did!</h1>
+    <div>
+            <form class="add-form">
+              <label for="input-bn">Add a crew:</label>
+              <input id="input-bn" type="text" placeholder="Boat Number">
+              <button id="add-form-btn" type="submit" class="btn">Add</button>
+            </form>
     </div>
+    <div id="graph"></div>
+<script>
+var checkpoints = [
+{id: 'pewsey', label: 'Pewsey', type: 'number'},
+{id: 'hford', label: 'Hungerford', type: 'number'},
+{id: 'newbury', label: 'Newbury', type: 'number'},
+{id: 'aldermaston', label: 'Aldermaston', type: 'number'},
+{id: 'reading', label: 'Reading', type: 'number'},
+{id: 'marsh', label: 'Marsh', type: 'number'},
+{id: 'marlow', label: 'Marlow', type: 'number'},
+{id: 'bray', label: 'Bray', type: 'number'},
+{id: 'windsor', label: 'Windsor', type: 'number'},
+{id: 'shepperton', label: 'Shepperton', type: 'number'},
+{id: 'teddington', label: 'Teddington', type: 'number'},
+{id: 'westminster', label: 'Westminster', type: 'number'}
+],
+    cols = [{id: 'Location', type: 'string'}], rows = [];
 
+function getBoatSeries() {
+    var boats = [];
+    for (var i=1; i<cols.length; i++) {
+        boats.push(cols[i].id);
+    }
+    return boats;
+}
+
+function removeBoat(n) {
+    var boatCol = boatColumn(n);
+    while (boatCol > -1) {
+        /*cols = cols.splice(boatCol+1, 1);
+        for (var i=0; i<rows.length; i++) {
+            rows[i].c = rows[i].c.splice(boatCol+1, 1);
+        }*/
+        chartData.removeColumn(boatCol+1);
+        boatCol = boatColumn(n);
+    }
+} 
+
+function boatColumn(n) {
+    for (var i=1; i<cols.length; i++) {
+        if (cols[i].id == n) {
+            return i-1;
+        }
+    }
+    return -1;
+}
+
+function isBoatAdded(n) {
+    return boatColumn(n) > -1;
+}
+
+function formatLabel(result) {
+    var crew = result.crew, names = crew[0].firstname + " " + crew[0].surname;
+    if (crew.length > 1) {
+        names += " & " + crew[1].firstname + " " + crew[1].surname;
+    }
+    return result.boat_number + " " + names;
+}
+
+function redrawChart() {
+    chart.draw(chartData, chartOptions);
+}
+
+                    // Set chart options
+                    var chartOptions = {
+                        'vAxis': {'title': 'Speed (mph)'},
+                        'hAxis': {'title': 'Location'},
+                        'width': 800,
+                        'height': 450,
+                        //'isStacked': true,
+                        'titlePosition': 'none'
+                    };
+                    var chart = new google.visualization.LineChart(document.getElementById('graph'));
+                    var chartData = new google.visualization.DataTable({cols: cols, rows: rows});
+                    for (var j=0; j<checkpoints.length; j++) {
+                        var  row = [{v: checkpoints[j].label }];
+                        rows.push({c: row})
+                    }
+
+    YUI().use('node', 'event', 'datasource', 'history', function (Y) {
+
+        var locationsDataSource = new Y.DataSource.Get({
+            source: "/data"
+        });
+
+    function addSeries(num) {
+       locationsDataSource.sendRequest({
+            request: "?bn=" + encodeURIComponent(num),
+            on: {
+                success: function(e) {
+                    var results = e.data.results;
+                    Y.log("API returned " + results.length + " results");
+                    for (var i=0; i<results.length; i++) {
+                        if (!isBoatAdded(results[i].boat_number)) {
+                            cols.push({ id: results[i].boat_number, label: formatLabel(results[i]), type: 'number' });
+                    for (var j=0; j<checkpoints.length; j++) {
+                        var  row = rows[j];
+                                var locations = results[i].locations.slice(1), // skip devizes
+                                loc = locations[j];
+                                row.c.push({v: !loc.retired ? loc.speed : null});
+                    }
+                    }
+                    }
+                    Y.log(cols);
+                    Y.log(rows);
+    
+                    chart.draw(chartData, chartOptions);
+                },
+                failure: function(e) {
+                    alert(e.error.message);
+                }
+            }
+        });
+    }
+        var history = new Y.HistoryHash({
+            initialState: {
+                bn: ""
+            }
+        });
+        Y.on('history:change', function (e) {
+            var selected = (history.get('bn') || '').split(','), displayed = getBoatSeries();
+            for (var i=0; i<displayed.length; i++) {
+               var isSelected = false;
+               for (var j=0; j<selected.length; j++) {
+                   if (displayed[i] == selected[j]) {
+                       isSelected = true;
+                   }
+               }
+               if (!isSelected) {
+                   Y.log("Removing " + displayed[i]);
+                   removeBoat(displayed[i]);
+               }
+            }
+            addSeries(history.get('bn'));
+        });
+        addSeries(history.get('bn'));
+        Y.one("#add-form-btn").on("click", function(e) {
+            var bn = Y.one("#input-bn").get("value");
+            if (bn && !isBoatAdded(parseInt(bn, 10))) {
+                history.addValue('bn', history.get('bn') + ',' + bn);
+            }
+            Y.one("#input-bn").set("value", "");
+        });
+    });
+</script>
 {% endblock content %}

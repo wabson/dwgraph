@@ -17,7 +17,7 @@ YUI().use('node', 'event', function (Y) {
         // Stop the event from bubbling up the DOM tree
         e.stopPropagation();
 
-        window.location = window.location.protocol + "//" + window.location.host + "/graph?bn=" + Y.one("input").get("value");
+        window.location = window.location.protocol + "//" + window.location.host + "/graph#bn=" + Y.one("input").get("value");
     });
 });
 </script>
