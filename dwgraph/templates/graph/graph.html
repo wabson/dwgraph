@@ -10,17 +10,34 @@ google.load('visualization', '1.0', {'packages':['corechart', 'table']});
 #graph svg {
     border: 1px dashed #999;
 }
+.social  {
+    margin-bottom: 1em;
+}
 </style>
 <title>The DW Graph</title>
 {% endblock header %}
 
 {% block content %}
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
     <h1>Here's how you did!</h1>
             <form class="add-form form-inline">
               <label for="input-bn">Add another crew:</label>
               <input id="input-bn" type="text" placeholder="Boat Number">
               <button id="add-form-btn" type="submit" class="btn">Add</button>
             </form>
+<div class="social">
+<div class="fb-like" data-send="false" data-layout="button_count" data-width="450" data-show-faces="true"></div>
+<a href="https://twitter.com/share" class="twitter-share-button" data-lang="en">Tweet</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="https://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+</div>
     <div id="graph"></div>
 <script>
 var checkpoints = [
