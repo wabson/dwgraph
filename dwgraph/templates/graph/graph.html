@@ -137,7 +137,7 @@ function redrawChart() {
                         var  row = rows[j];
                                 var locations = results[i].locations.slice(1), // skip devizes
                                 loc = locations[j];
-                                row.c.push({v: !loc.retired ? loc.speed : null});
+                                row.c.push({v: !loc.retired ? Math.round(loc.speed*100)/100 : null});
                     }
                     }
                     }
