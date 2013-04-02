@@ -1,11 +1,15 @@
 {% extends "base.html" %}
 
+{% block header %}
+<title>The DW Graph</title>
+{% endblock header %}
+
 {% block content %}
     <div class="hero-unit">
-        <h1>How did you do?</h1>
+        <h1>How did you do on DW?</h1>
         <form>
         <p>Enter a boat number to get started</p>
-        <input type="text" name="bn" value="" /><br />
+        <input type="text" name="bn" value="" placeholder="Boat Number" /><br />
         <button type="button" class="btn btn-primary btn-large" id="submit-btn" disabled>Show Graph &raquo;</button>
         </form>
       </div>
