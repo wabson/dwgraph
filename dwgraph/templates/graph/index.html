@@ -1,11 +1,20 @@
 {% extends "base.html" %}
 
 {% block header %}
-<title>The DW Graph</title>
+<title>DW Graph</title>
+<style type="text/css">
+.hero-unit.dw {
+    background: url(static/img/img_3217.jpg);
+}
+.hero-unit.dw h1, .hero-unit.dw p {
+    color: #fff;
+    text-shadow: 2px 4px 3px rgba(0,0,0,0.3);
+}
+</style>
 {% endblock header %}
 
 {% block content %}
-    <div class="hero-unit">
+    <div class="dw hero-unit">
         <h1>How did you do on DW?</h1>
         <form>
         <p>Enter a boat number to get started</p>
@@ -13,6 +22,7 @@
         <button type="button" class="btn btn-primary btn-large" id="submit-btn">Show Graph &raquo;</button>
         </form>
       </div>
+    <p>The DW Graph attempts to give an indication of overnight crews' relative performances over the course of the <a href="http://www.dwrace.org.uk/">Devizes to Westminster Race</a>, using a graphical display. The data displayed is calculated from the official <a href="http://www.dwrace.org.uk/results/2013/Progress/LocationOvernight.html">checkpoint times</a> available from the race site. We value feedback on the site but please raise any issues found with the data itself with the race organisers.</p>
 <script>
 // Create a YUI sandbox on your page.
 YUI().use('node', 'event', 'event-key', function (Y) {

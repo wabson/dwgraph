@@ -8,13 +8,19 @@ google.load('visualization', '1.0', {'packages':['corechart', 'table']});
 </script>
 <style type="text/css">
 #graph svg {
-    border: 1px dashed #999;
+    border: 1px solid #ccc;
 }
 .social  {
     margin-bottom: 1em;
 }
+h1.graph-hdr {
+    margin-bottom: 0.5em;
+}
+#graph {
+    margin-bottom: 1em;
+}
 </style>
-<title>The DW Graph</title>
+<title>DW Graph</title>
 {% endblock header %}
 
 {% block content %}
@@ -27,19 +33,20 @@ google.load('visualization', '1.0', {'packages':['corechart', 'table']});
   fjs.parentNode.insertBefore(js, fjs);
 }(document, 'script', 'facebook-jssdk'));</script>
 
-    <h1>Here's how you did!</h1>
-            <form class="add-form form-inline">
-              <label for="input-bn">Add another crew:</label>
-              <input id="input-bn" type="text" placeholder="Boat Number">
-              <button id="add-form-btn" type="submit" class="btn">Add</button>
-            </form>
-<div class="messages"></div>
-<div class="social">
+    <h1 class="graph-hdr"></h1>
+<div class="social pull-right">
 <div class="fb-like" data-send="false" data-layout="button_count" data-width="450" data-show-faces="true"></div>
 <a href="https://twitter.com/share" class="twitter-share-button" data-lang="en">Tweet</a>
 <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="https://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
 </div>
+            <form class="add-form form-inline">
+              <label for="input-bn">Compare with:</label>
+              <input id="input-bn" class="input-small" type="text" placeholder="Boat Number">
+              <button id="add-form-btn" type="submit" class="btn">Add</button>
+            </form>
+<div class="messages"></div>
     <div id="graph"></div>
+    <p><em>The graph shows the speed between each race checkpoint and the previous one. Speeds shown are calculated based on the checkpoint times published on the results web page and the distances between checkpoints.</em></p>
 <script>
 var checkpoints = [
 {id: 'pewsey', label: 'Pewsey', type: 'number'},
@@ -104,12 +111,21 @@ function redrawChart() {
 
                     // Set chart options
                     var chartOptions = {
-                        'vAxis': {'title': 'Speed (mph)'},
-                        'hAxis': {'title': 'Location'},
                         'width': 1168, // container is 1170 but the graph has 1px border each side
                         'height': 450,
-                        //'isStacked': true,
-                        'titlePosition': 'none'
+                        'titlePosition': 'none',
+                        legend: {
+                            textStyle: {color: 'black', fontName: 'Arial', fontSize: 12}
+                        },
+                        hAxis: {
+                            title: '',
+                            textStyle: {color: 'black', fontName: 'Arial', fontSize: 12},
+                            slantedText: false
+                        },
+                        vAxis: {
+                            title: 'Speed (mph)',
+                            textStyle: {color: 'black', fontName: 'Arial', fontSize: 12}
+                        }
                     };
                     var chart = new google.visualization.LineChart(document.getElementById('graph'));
                     var chartData = new google.visualization.DataTable({cols: cols, rows: rows});
@@ -144,7 +160,7 @@ function redrawChart() {
             request: "?bn=" + encodeURIComponent(num),
             on: {
                 success: function(e) {
-                    var results = e.data.results, messages = "";
+                    var results = e.data.results, messages = "", hdr = "Results for ";
                     Y.log("API returned " + results.length + " results");
                     for (var i=0; i<results.length; i++) {
                         if (!isBoatAdded(results[i].boat_number)) {
@@ -156,6 +172,7 @@ function redrawChart() {
                                 row.c.push({v: !loc.retired ? Math.round(loc.speed*100)/100 : null});
                     }
                     }
+                        hdr += (i > 0 ? ', ' : '') + results[i].crew[0].surname + " & " + results[i].crew[1].surname;
                     }
                     Y.log(cols);
                     Y.log(rows);
@@ -176,6 +193,8 @@ function redrawChart() {
                     if (newBn.slice(1) != history.get('bn')) {
                         history.replaceValue('bn', newBn.slice(1));
                     }
+                    Y.one("h1").setHTML(hdr);
+                    document.title = "DW Graph - " + hdr;
                 },
                 failure: function(e) {
                     alert(e.error.message);
