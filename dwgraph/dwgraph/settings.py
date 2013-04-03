@@ -4,6 +4,7 @@ import os
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
+PROJECT_PATH = os.path.abspath(os.path.dirname(__file__))
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
@@ -20,7 +21,7 @@ DATABASES = {
     'data': {
         #'ENGINE': 'django.db.backends.', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
         'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'devizes_to_westminster_results.sqlite',                      # Or path to database file if using sqlite3.
+        'NAME': os.path.join(PROJECT_PATH, '..', 'devizes_to_westminster_results.sqlite'),                      # Or path to database file if using sqlite3.
         # The following settings are not used with sqlite3:
         'USER': '',
         'PASSWORD': '',
@@ -117,7 +118,7 @@ ROOT_URLCONF = 'dwgraph.urls'
 WSGI_APPLICATION = 'dwgraph.wsgi.application'
 
 TEMPLATE_DIRS = (
-    os.path.join('templates'),
+    os.path.join(PROJECT_PATH, '..', 'templates'),
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
