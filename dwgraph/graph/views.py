@@ -6,11 +6,17 @@ from datetime import datetime, timedelta, date
 
 # Create your views here.
 
+this_year = 2015
+
 def home(request):
-    return render_to_response('graph/index.html', {}, context_instance=RequestContext(request))
+    return render_to_response('graph/index.html', {'year': this_year, 'archives': range(2007, this_year)}, context_instance=RequestContext(request))
 
 def graph(request):
-    return render_to_response('graph/graph.html', {}, context_instance=RequestContext(request))
+    return render_to_response('graph/graph.html', {'year': this_year}, context_instance=RequestContext(request))
+
+def graph_archive(request):
+    year = int(request.path[1:]) # Strip off initial '/'
+    return render_to_response('graph/graph.html', {'year':year}, context_instance=RequestContext(request))
 
 locations = ['devizes', 'pewsey', 'hford', 'newbury', 'aldermaston', 'reading', 'marsh', 'marlow', 'bray', 'windsor', 'shepperton', 'teddington', 'westminster']
 
@@ -31,13 +37,37 @@ distances = {
     'westminster': 201.332868591
 }
 
+# Dates of Easter Sunday
+easter_dates = {
+    2002: (3, 31),
+    2003: (4, 20),
+    2004: (4, 11),
+    2005: (3, 27),
+    2006: (4, 16),
+    2007: (4, 8),
+    2008: (3, 23),
+    2009: (4, 12),
+    2010: (4, 4),
+    2011: (4, 24),
+    2013: (3, 31),
+    2014: (4, 20),
+    2015: (4, 5),
+    2016: (3, 27),
+    2017: (4, 16),
+    2018: (4, 1),
+    2019: (4, 21),
+    2020: (4, 12)
+}
+
 def km_to_mi(d):
     return d * 0.621371192
 
 def get_easter_date(year):
     #row = scraperwiki.sqlite.select("* from easter_dates.swdata where year = %s" % (year))[0]
-    row = {'year': 2013, 'month': 03, 'day': 31}
-    return date(row['year'], row['month'], row['day'])
+    #return date(row['year'], row['month'], row['day'])
+    y = int(year)
+    (m, d) = easter_dates[y]
+    return date(y, m, d)
 
 def daytime_to_datetime(year, daytime):
     days = ['Fri', 'Sat', 'Sun', 'Mon']
@@ -107,7 +137,7 @@ def dictfetchall(cursor):
 
 def data(request):
     from django.db import connections
-    year = 2013
+    year = int(request.GET.get('y', '0'))
     boat_nums = request.GET.get('bn', '0').split(',')
     cb = request.GET.get('callback', 'callback')
     cursor = connections['data'].cursor()

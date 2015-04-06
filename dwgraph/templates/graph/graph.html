@@ -40,8 +40,8 @@ h1.graph-hdr {
 <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="https://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
 </div>
             <form class="add-form form-inline">
-              <label for="input-bn">Compare with:</label>
-              <input id="input-bn" class="input-small" type="text" placeholder="Boat Number">
+              <label for="input-bn"></label>
+              <input id="input-bn" class="input-medium" type="text" placeholder="Add Boat Number">
               <button id="add-form-btn" type="submit" class="btn">Add</button>
             </form>
 <div class="messages"></div>
@@ -156,7 +156,7 @@ function redrawChart() {
             return;
          }
          locationsDataSource.sendRequest({
-            request: "?bn=" + encodeURIComponent(num),
+            request: "?bn=" + encodeURIComponent(num) + "&y=" + {{ year }},
             on: {
                 success: function(e) {
                     var results = e.data.results, messages = "", hdr = "Results for ";

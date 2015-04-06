@@ -8,6 +8,7 @@ urlpatterns = patterns('',
     # Examples:
     url(r'^$', 'graph.views.home', name='home'),
     url(r'^graph$', 'graph.views.graph', name='graph'),
+    url(r'^\d{4}$', 'graph.views.graph_archive', name='graph_archive'),
     url(r'^data$', 'graph.views.data', name='data'),
     # url(r'^dwgraph/', include('dwgraph.foo.urls')),
 
