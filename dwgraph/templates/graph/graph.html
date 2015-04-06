@@ -76,18 +76,14 @@ function getBoatSeries() {
 function removeBoat(n) {
     var boatCol = boatColumn(n);
     while (boatCol > -1) {
-        /*cols = cols.splice(boatCol+1, 1);
-        for (var i=0; i<rows.length; i++) {
-            rows[i].c = rows[i].c.splice(boatCol+1, 1);
-        }*/
         chartData.removeColumn(boatCol+1);
         boatCol = boatColumn(n);
     }
 } 
 
 function boatColumn(n) {
-    for (var i=1; i<cols.length; i++) {
-        if (cols[i].id == n) {
+    for (var i=1; i<chartData.getNumberOfColumns(); i++) {
+        if (chartData.getColumnId(i) == n) {
             return i-1;
         }
     }
@@ -131,8 +127,7 @@ function redrawChart() {
                     var chart = new google.visualization.LineChart(document.getElementById('graph'));
                     var chartData = new google.visualization.DataTable({cols: cols, rows: rows});
                     for (var j=0; j<checkpoints.length; j++) {
-                        var  row = [{v: checkpoints[j].label }];
-                        rows.push({c: row})
+                        chartData.addRow([{v: checkpoints[j].label }]);
                     }
 
     YUI().use('node', 'event', 'event-key', 'datasource', 'history', function (Y) {
@@ -164,21 +159,21 @@ function redrawChart() {
                     var results = e.data.results, messages = "", hdr = "Results for ";
                     Y.log("API returned " + results.length + " results");
                     for (var i=0; i<results.length; i++) {
+                        var locations = results[i].locations.slice(1); // skip devizes
                         if (!isBoatAdded(results[i].boat_number)) {
-                            cols.push({ id: results[i].boat_number, label: formatLabel(results[i]), type: 'number' });
-                    for (var j=0; j<checkpoints.length; j++) {
-                        var  row = rows[j];
-                                var locations = results[i].locations.slice(1), // skip devizes
-                                loc = locations[j];
-                                row.c.push({v: !loc.retired ? Math.round(loc.speed*100)/100 : null});
-                    }
-                    }
+                            chartData.addColumn({ id: results[i].boat_number, label: formatLabel(results[i]), type: 'number' });
+                            for (var j=0; j<checkpoints.length; j++) {
+                                var  row = rows[j],
+                                    loc = locations[j];
+                                chartData.setCell(j, i+1, !loc.retired ? Math.round(loc.speed*100)/100 : null);
+                            }
+                        }
                         hdr += (i > 0 ? ', ' : '') + results[i].crew[0].surname + " & " + results[i].crew[1].surname;
                     }
                     Y.log(cols);
                     Y.log(rows);
     
-                    if (cols.length > 1) {
+                    if (chartData.getNumberOfColumns() > 1) {
                         chart.draw(chartData, chartOptions);
                     }
 
