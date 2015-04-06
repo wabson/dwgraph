@@ -46,6 +46,7 @@ h1.graph-hdr {
             </form>
 <div class="messages"></div>
     <div id="graph"></div>
+    <div id="table"></div>
     <p><em>The graph shows the speed between each race checkpoint and the previous one. Speeds shown are calculated based on the checkpoint times published on the results web page and the distances between checkpoints.</em></p>
 <script>
 var checkpoints = [
@@ -180,6 +181,9 @@ function redrawChart() {
                     if (cols.length > 1) {
                         chart.draw(chartData, chartOptions);
                     }
+
+                    //var table = new google.visualization.Table(document.getElementById('table'));
+                    //table.draw(chartData, {showRowNumber: true});
                     
                     var newBn = ''; // Remove boats which were not returned by the XHR
                     Y.Array.each(numbers, function(item, index, arr) {
