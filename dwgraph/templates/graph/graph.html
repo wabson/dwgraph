@@ -143,6 +143,9 @@ function redrawChart() {
         });
 
         function addSeries(num) {
+          if (!num) {
+            return;
+          }
           var allAdded = true, numbers = num.split(',');
           Y.Array.each((num||'').split(','), function(item, index, arr) {
             if (!isBoatAdded(item)) {
@@ -210,7 +213,7 @@ function redrawChart() {
                    removeBoat(displayed[i]);
                }
             }
-            addSeries(history.get('bn'));
+            addSeries(history.get('bn') || '');
         });
         addSeries(history.get('bn'));
 
