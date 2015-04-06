@@ -130,7 +130,7 @@ function redrawChart() {
                         chartData.addRow([{v: checkpoints[j].label }]);
                     }
 
-    YUI().use('node', 'event', 'event-key', 'datasource', 'history', function (Y) {
+    YUI().use('node', 'event', 'event-key', 'datasource', 'history', 'console', function (Y) {
 
         var history = new Y.HistoryHash({
             initialState: {
@@ -222,8 +222,13 @@ function redrawChart() {
             e.stopPropagation();
             var bn = Y.one("#input-bn").get("value");
             if (bn && !isBoatAdded(parseInt(bn, 10))) {
-                var oldVal = history.get('bn');
-                history.addValue('bn', oldVal + (oldVal != '' ? ',' : '') + bn);
+                var oldValue = history.get('bn');
+                Y.log("Old value: " + oldValue, "info",  "graph");
+                var newValue = (oldValue ? oldValue + ',' : '') + bn;
+                Y.log("New value: " + newValue, "info",  "graph");
+                if (newValue != oldValue) {
+                    history.addValue('bn', newValue);
+                }
             }
             Y.one("#input-bn").set("value", "");
         }
