@@ -80,6 +80,18 @@ def daytime_to_datetime(year, daytime):
             return (datetime(start_date.year, start_date.month, start_date.day, int(timeparts[0]), int(timeparts[1]), int(timeparts[2]))) + (timedelta(days=days.index(day)))
     return None
 
+def __get_arrival_time(year, location, row):
+    timestr = row.get('time_%s' % (location)) or row.get('time_%s_arr' % (location))
+    return daytime_to_datetime(year, timestr.replace('rtd ', ''))
+
+def __get_departure_time(year, location, row):
+    timestr = row.get('time_%s' % (location)) or row.get('time_%s_dep' % (location))
+    return daytime_to_datetime(year, timestr.replace('rtd ', ''))
+
+def __is_retired(location, row):
+    timestr = row.get('time_%s' % (location)) or row.get('time_%s_arr' % (location))
+    return timestr.startswith('rtd')
+
 def calculate_crew_data(year, row):
     lastdist = 0.0
     lasttime = None
@@ -87,17 +99,18 @@ def calculate_crew_data(year, row):
     missing_locs = [] # any stages for which timing data is missing
     for loc in locations:
         stage_data = None
-        retired = str(row['time_%s' % (loc)]).startswith('rtd')
-        stime = daytime_to_datetime(year, row['time_%s' % (loc)].replace('rtd ', ''))
+        retired = __is_retired(loc, row)
+        atime = __get_arrival_time(year, loc, row)
+        dtime = __get_departure_time(year, loc, row)
         # TODO check if time is marked as retired
-        if (stime is not None):
+        if (atime is not None):
             sdist = distances[loc]
             stage_dist = sdist - lastdist
-            stage_time = stime - lasttime if lasttime is not None else None
+            stage_time = atime - lasttime if lasttime is not None else None
             stage_speed = stage_dist / (stage_time.seconds / 3600.0) if stage_time is not None else None
             stage_data = {
                 'split_dist': sdist,
-                'split_time': stime,
+                'split_time': atime,
                 'stage_dist': stage_dist,
                 'stage_time': stage_time,
                 'stage_speed': stage_speed,
@@ -106,7 +119,7 @@ def calculate_crew_data(year, row):
             cdata[loc] = stage_data
 
             lastdist = sdist
-            lasttime = stime
+            lasttime = dtime
         else:
             missing_locs.append(loc)
 
@@ -128,7 +141,7 @@ def build_crew_data(row):
         crews.append({'firstname': row['firstname_2'], 'surname': row['surname_2'], 'club': row['club_2']})
     return crews
 
-def dictfetchall(cursor):
+def __dictfetchall(cursor):
     "Returns all rows from a cursor as a dict"
     desc = cursor.description
     return [
@@ -136,21 +149,32 @@ def dictfetchall(cursor):
         for row in cursor.fetchall()
     ]
 
-def data(request):
+def __get_overnight_locations_query(year, boat_nums):
+    return __get_locations_query(year, 'locations', boat_nums)
+
+def __get_fourday_locations_query(year, boat_nums):
+    return __get_locations_query(year, 'locations_4d', boat_nums)
+
+def __get_locations_query(year, loc_table, boat_nums):
+    query_params = { 'year': int(year), 'loc_table': loc_table, 'boats': ', '.join([str(int(bn)) for bn in boat_nums])}
+    return "select %(loc_table)s.*, firstname_1, firstname_2, surname_1, surname_2, club_1, club_2, class_position as position, class_results.elapsed_time from %(loc_table)s JOIN class_results on %(loc_table)s.boat_number=class_results.boat_number and %(loc_table)s.year=class_results.year where class_results.year = '%(year)s' and class_results.boat_number IN (%(boats)s)" % query_params
+
+def __get_query_data(query):
     from django.db import connections
-    year = int(request.GET.get('y', '0'))
-    boat_nums = request.GET.get('bn', '0').split(',')
-    cb = request.GET.get('callback', 'callback')
     cursor = connections['data'].cursor()
     try:
-        query = "select locations.*, firstname_1, firstname_2, surname_1, surname_2, club_1, club_2, class_position as position, elapsed_time from locations JOIN class_results on locations.boat_number=class_results.boat_number and locations.year=class_results.year where class_results.year = '%s' and class_results.boat_number IN (%s)" % (int(year), '%s' % (int(boat_nums[0])) + ' '.join([(", %s" % int(bn)) for bn in boat_nums[1:]]))
         cursor.execute(query);
+        return __dictfetchall(cursor)
     except ValueError, e:
-        pass
-    _d = {}
-    if (True):
-        rows = dictfetchall(cursor)
-        data = [{'boat_number': row['boat_number'], 'crew': build_crew_data(row), 'position': row['position'], 'time': row['elapsed_time'], 'locations': calculate_crew_data(year, row), 'retired': row['status'].startswith('rtd'), 'disqualified': row['status'].startswith('dsq')} for row in rows]
-        if boat_nums[0] != "all":
-            _d = {'results': [{'boat_number': d['boat_number'], 'position': d['position'] , 'time': d['time'], 'crew': d['crew'], 'locations': get_result_locations(d['locations'])} for d in data], 'year': year}
+        return None
+
+def data(request):
+    year = int(request.GET.get('y', '0'))
+    boat_nums = request.GET.get('bn', '0').split(',')
+    # TODO check argument formats here
+    cb = request.GET.get('callback', 'callback')
+    rows = __get_query_data(__get_overnight_locations_query(year, boat_nums))
+    rows.extend(__get_query_data(__get_fourday_locations_query(year, boat_nums)))
+    data = [{'boat_number': row['boat_number'], 'crew': build_crew_data(row), 'position': row['position'], 'time': row['elapsed_time'], 'locations': calculate_crew_data(year, row), 'retired': row['status'].startswith('rtd'), 'disqualified': row['status'].startswith('dsq')} for row in rows]
+    _d = {'results': [{'boat_number': d['boat_number'], 'position': d['position'] , 'time': d['time'], 'crew': d['crew'], 'locations': get_result_locations(d['locations'])} for d in data], 'year': year}
     return HttpResponse('%s(%s)' % (cb, json.dumps(_d)), mimetype='application/json')

@@ -182,7 +182,7 @@ function redrawChart() {
                         } else {
                             Y.log("Skipped adding boat " + results[i].boat_number + " to chart data, already there", "debug");
                         }
-                        hdr += (i > 0 ? ', ' : '') + results[i].crew[0].surname + " & " + results[i].crew[1].surname;
+                        hdr += (i > 0 ? ', ' : '') + results[i].crew[0].surname + (results[i].crew[1] ? (" & " + results[i].crew[1].surname) : "");
                     }
                     Y.log(cols, "debug");
                     Y.log(rows, "debug");
