@@ -144,6 +144,7 @@ function redrawChart() {
 
         function addSeries(num) {
           if (!num) {
+            Y.log("No number specified, exiting addSeries", "debug");
             return;
           }
           var allAdded = true, numbers = num.split(',');
@@ -153,29 +154,38 @@ function redrawChart() {
             }
          });
          if (allAdded) {
+            Y.log("All numbers added already, exiting addSeries", "debug");
             return;
          }
+         var queryUrl = "?bn=" + encodeURIComponent(num) + "&y=" + {{ year }};
+         Y.log("Sending query + " + queryUrl, "debug");
          locationsDataSource.sendRequest({
-            request: "?bn=" + encodeURIComponent(num) + "&y=" + {{ year }},
+            request: queryUrl,
             on: {
                 success: function(e) {
                     var results = e.data.results, messages = "", hdr = "Results for ";
-                    Y.log("API returned " + results.length + " results");
+                    Y.log("API returned " + results.length + " results", "debug");
                     for (var i=0; i<results.length; i++) {
                         var locations = results[i].locations.slice(1); // skip devizes
                         if (!isBoatAdded(results[i].boat_number)) {
+                            Y.log("Adding boat " + results[i].boat_number + " to chart data", "debug");
                             chartData.addColumn({ id: results[i].boat_number, label: formatLabel(results[i]), type: 'number' });
                             colNum = chartData.getNumberOfColumns();
+                            Y.log("checkpoints.length: " + checkpoints.length, "debug");
                             for (var j=0; j<checkpoints.length; j++) {
                                 var  row = rows[j],
-                                    loc = locations[j];
-                                chartData.setCell(j, colNum-1, !loc.retired ? Math.round(loc.speed*100)/100 : null);
+                                    loc = locations[j],
+                                    value = !loc.retired ? Math.round(loc.speed*100)/100 : null;
+                                Y.log("Adding boat " + results[i].boat_number + " data point [" + (colNum-1) + "][" + j + "]=" + value + " to chart data", "debug");
+                                chartData.setCell(j, colNum-1, value);
                             }
+                        } else {
+                            Y.log("Skipped adding boat " + results[i].boat_number + " to chart data, already there", "debug");
                         }
                         hdr += (i > 0 ? ', ' : '') + results[i].crew[0].surname + " & " + results[i].crew[1].surname;
                     }
-                    Y.log(cols);
-                    Y.log(rows);
+                    Y.log(cols, "debug");
+                    Y.log(rows, "debug");
     
                     if (chartData.getNumberOfColumns() > 1) {
                         chart.draw(chartData, chartOptions);
@@ -206,11 +216,12 @@ function redrawChart() {
         });
     }
         Y.on('history:change', function (e) {
+            Y.log("history:change event", "debug");
             var selected = (history.get('bn') || '').split(','), displayed = getBoatSeries();
             for (var i=0; i<displayed.length; i++) {
                var isSelected = Y.Array.indexOf(selected, displayed[i]) > -1;
                if (!isSelected) {
-                   Y.log("Removing " + displayed[i]);
+                   Y.log("Removing " + displayed[i], "debug");
                    removeBoat(displayed[i]);
                }
             }
@@ -224,10 +235,11 @@ function redrawChart() {
             var bn = Y.one("#input-bn").get("value");
             if (bn && !isBoatAdded(parseInt(bn, 10))) {
                 var oldValue = history.get('bn');
-                Y.log("Old value: " + oldValue, "info",  "graph");
+                Y.log("Old value: " + oldValue, "debug",  "graph", "debug");
                 var newValue = (oldValue ? oldValue + ',' : '') + bn;
-                Y.log("New value: " + newValue, "info",  "graph");
+                Y.log("New value: " + newValue, "debug",  "graph", "debug");
                 if (newValue != oldValue) {
+                    Y.log("Adding " + newValue + " to history", "debug");
                     history.addValue('bn', newValue);
                 }
             }
