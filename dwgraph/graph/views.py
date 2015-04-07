@@ -117,7 +117,8 @@ def calculate_crew_data(year, row):
     return cdata
 
 def get_result_locations(datalocations):
-    return [({'name': loc, 'speed': km_to_mi(datalocations[loc]['stage_speed']) if datalocations[loc]['stage_speed'] is not None else 0.0, 'retired': datalocations[loc]['retired']} if loc in datalocations else {'name': loc, 'retired': True, 'stage_speed': None}) for loc in locations]
+    abbr_locations = [ l.replace('time_', '') for l in locations ]
+    return dict(zip(abbr_locations, [({'speed': km_to_mi(datalocations[loc]['stage_speed']) if datalocations[loc]['stage_speed'] is not None else 0.0, 'retired': datalocations[loc]['retired']} if loc in datalocations else {'name': loc, 'retired': True, 'stage_speed': None}) for loc in locations]))
         
 
 def build_crew_data(row):

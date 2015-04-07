@@ -166,7 +166,7 @@ function redrawChart() {
                     var results = e.data.results, messages = "", hdr = "Results for ";
                     Y.log("API returned " + results.length + " results", "debug");
                     for (var i=0; i<results.length; i++) {
-                        var locations = results[i].locations.slice(1); // skip devizes
+                        var locations = results[i].locations;
                         if (!isBoatAdded(results[i].boat_number)) {
                             Y.log("Adding boat " + results[i].boat_number + " to chart data", "debug");
                             chartData.addColumn({ id: results[i].boat_number, label: formatLabel(results[i]), type: 'number' });
@@ -174,7 +174,7 @@ function redrawChart() {
                             Y.log("checkpoints.length: " + checkpoints.length, "debug");
                             for (var j=0; j<checkpoints.length; j++) {
                                 var  row = rows[j],
-                                    loc = locations[j],
+                                    loc = locations[checkpoints[j]['id']],
                                     value = !loc.retired ? Math.round(loc.speed*100)/100 : null;
                                 Y.log("Adding boat " + results[i].boat_number + " data point [" + (colNum-1) + "][" + j + "]=" + value + " to chart data", "debug");
                                 chartData.setCell(j, colNum-1, value);
