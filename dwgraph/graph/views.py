@@ -82,15 +82,15 @@ def daytime_to_datetime(year, daytime):
 
 def __get_arrival_time(year, location, row):
     timestr = row.get('time_%s' % (location)) or row.get('time_%s_arr' % (location))
-    return daytime_to_datetime(year, timestr.replace('rtd ', ''))
+    return daytime_to_datetime(year, timestr.replace('rtd ', '')) if timestr is not None else None
 
 def __get_departure_time(year, location, row):
     timestr = row.get('time_%s' % (location)) or row.get('time_%s_dep' % (location))
-    return daytime_to_datetime(year, timestr.replace('rtd ', ''))
+    return daytime_to_datetime(year, timestr.replace('rtd ', '')) if timestr is not None else None
 
 def __is_retired(location, row):
     timestr = row.get('time_%s' % (location)) or row.get('time_%s_arr' % (location))
-    return timestr.startswith('rtd')
+    return timestr.startswith('rtd') if timestr is not None else False
 
 def calculate_crew_data(year, row):
     lastdist = 0.0
@@ -102,7 +102,6 @@ def calculate_crew_data(year, row):
         retired = __is_retired(loc, row)
         atime = __get_arrival_time(year, loc, row)
         dtime = __get_departure_time(year, loc, row)
-        # TODO check if time is marked as retired
         if (atime is not None):
             sdist = distances[loc]
             stage_dist = sdist - lastdist
