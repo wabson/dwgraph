@@ -165,10 +165,11 @@ function redrawChart() {
                         var locations = results[i].locations.slice(1); // skip devizes
                         if (!isBoatAdded(results[i].boat_number)) {
                             chartData.addColumn({ id: results[i].boat_number, label: formatLabel(results[i]), type: 'number' });
+                            colNum = chartData.getNumberOfColumns();
                             for (var j=0; j<checkpoints.length; j++) {
                                 var  row = rows[j],
                                     loc = locations[j];
-                                chartData.setCell(j, i+1, !loc.retired ? Math.round(loc.speed*100)/100 : null);
+                                chartData.setCell(j, colNum-1, !loc.retired ? Math.round(loc.speed*100)/100 : null);
                             }
                         }
                         hdr += (i > 0 ? ', ' : '') + results[i].crew[0].surname + " & " + results[i].crew[1].surname;
