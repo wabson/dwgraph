@@ -67,8 +67,8 @@ var checkpoints = [
 
 function getBoatSeries() {
     var boats = [];
-    for (var i=1; i<cols.length; i++) {
-        boats.push(cols[i].id);
+    for (var i=1; i<chartData.getNumberOfColumns(); i++) {
+        boats.push(chartData.getColumnId(i));
     }
     return boats;
 }
@@ -218,11 +218,14 @@ function redrawChart() {
         Y.on('history:change', function (e) {
             Y.log("history:change event", "debug");
             var selected = (history.get('bn') || '').split(','), displayed = getBoatSeries();
+            Y.log("Selected boats: " + selected, "debug");
+            Y.log("Displayed boats: " + displayed, "debug");
             for (var i=0; i<displayed.length; i++) {
                var isSelected = Y.Array.indexOf(selected, displayed[i]) > -1;
                if (!isSelected) {
                    Y.log("Removing " + displayed[i], "debug");
                    removeBoat(displayed[i]);
+                   chart.draw(chartData, chartOptions);
                }
             }
             addSeries(history.get('bn') || '');
