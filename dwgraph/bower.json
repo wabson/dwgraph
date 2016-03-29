@@ -14,6 +14,7 @@
     "tests"
   ],
   "dependencies": {
-    "yui3": "~3.18.1"
+    "yui3": "~3.18.1",
+    "bootstrap": "~3.3.6"
   }
 }
