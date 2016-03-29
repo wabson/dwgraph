@@ -181,8 +181,7 @@ def __get_query_data(query):
 
 def data(request):
     year = int(request.GET.get('y', '0'))
-    boat_nums = request.GET.get('bn', '0').split(',')
-    # TODO check argument formats here
+    boat_nums = [int(x) for x in request.GET.get('bn', '0').split(',') if re.match('\d+$', x) is not None]
     cb = request.GET.get('callback', 'callback')
     rows = __get_query_data(__get_overnight_locations_query(year, boat_nums))
     rows.extend(__get_query_data(__get_fourday_locations_query(year, boat_nums)))
