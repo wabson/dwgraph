@@ -108,7 +108,7 @@ def calculate_crew_data(year, row):
             sdist = distances[loc]
             stage_dist = sdist - lastdist
             stage_time = atime - lasttime if lasttime is not None else None
-            stage_speed = stage_dist / (stage_time.seconds / 3600.0) if stage_time is not None else None
+            stage_speed = stage_dist / (stage_time.seconds / 3600.0) if (stage_time is not None and stage_time.seconds > 0) else None
             stage_data = {
                 'split_dist': sdist,
                 'split_time': atime,
@@ -132,7 +132,7 @@ def calculate_crew_data(year, row):
 
 def get_result_locations(datalocations):
     abbr_locations = [ l.replace('time_', '') for l in locations ]
-    return dict(zip(abbr_locations, [({'speed': km_to_mi(datalocations[loc]['stage_speed']) if datalocations[loc]['stage_speed'] is not None else 0.0, 'retired': datalocations[loc]['retired']} if loc in datalocations else {'name': loc, 'retired': True, 'stage_speed': None}) for loc in locations]))
+    return dict(zip(abbr_locations, [({'speed': km_to_mi(datalocations[loc]['stage_speed']) if datalocations[loc]['stage_speed'] is not None else None, 'retired': datalocations[loc]['retired']} if loc in datalocations else {'name': loc, 'retired': True, 'stage_speed': None}) for loc in locations]))
         
 
 def build_crew_data(row):
