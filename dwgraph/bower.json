@@ -1,0 +1,19 @@
+{
+  "name": "dwgraph",
+  "version": "1.0.0",
+  "homepage": "https://github.com/wabson/dwgraph",
+  "authors": [
+    "Will Abson <will.abson@gmail.com>"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "yui3": "~3.18.1"
+  }
+}
