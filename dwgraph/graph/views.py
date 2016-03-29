@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, date
 
 # Create your views here.
 
-this_year = 2015
+this_year = 2016
 
 def home(request):
     return render_to_response('graph/index.html', {'year': this_year, 'archives': range(2007, this_year)}, context_instance=RequestContext(request))
