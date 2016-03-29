@@ -41,8 +41,8 @@ h1.graph-hdr {
 </div>
             <form class="add-form form-inline">
               <label for="input-bn"></label>
-              <input id="input-bn" class="input-medium" type="text" placeholder="Add Boat Number">
-              <button id="add-form-btn" type="submit" class="btn">Add</button>
+              <input id="input-bn" class="input-medium" type="text" placeholder="Search crews">
+              <button id="add-form-btn" type="submit" class="btn">Add to chart</button>
             </form>
 <div class="messages"></div>
     <div id="graph"></div>
@@ -130,7 +130,7 @@ function redrawChart() {
                         chartData.addRow([{v: checkpoints[j].label }]);
                     }
 
-    YUI().use('node', 'event', 'event-key', 'datasource', 'history', 'console', function (Y) {
+    YUI().use('node', 'event', 'event-key', 'datasource', 'history', 'console', 'autocomplete', 'highlight', function (Y) {
 
         var history = new Y.HistoryHash({
             initialState: {
@@ -235,7 +235,7 @@ function redrawChart() {
         function onAddClick(e) {
             e.preventDefault();
             e.stopPropagation();
-            var bn = Y.one("#input-bn").get("value");
+            var bn = e.result ? e.result.text : Y.one("#input-bn").get("value");
             if (bn && !isBoatAdded(parseInt(bn, 10))) {
                 var oldValue = history.get('bn');
                 Y.log("Old value: " + oldValue, "debug",  "graph", "debug");
@@ -249,9 +249,26 @@ function redrawChart() {
             Y.one("#input-bn").set("value", "");
         }
 
+        function formatResults(query, results) {
+            return Y.Array.map(results, function (result) {
+                return '<div>' + Y.Highlight.all(formatLabel(result.raw), query) + '</div>';
+            });
+        }
+
         Y.one("#add-form-btn").on("click", onAddClick);
-        Y.one("#input-bn").on("key", onAddClick, "enter");
+        //Y.one("#input-bn").on("key", onAddClick, "enter");
         Y.one("#input-bn").focus();
+        Y.one('body').addClass('yui3-skin-sam');
+
+        Y.one('#input-bn').plug(Y.Plugin.AutoComplete, {
+            source: '/crewdata?q={query}&callback={callback}&y={{ year }}',
+            resultListLocator: 'results',
+            resultTextLocator: function(crew) {
+                return crew.boat_number;
+            },
+            resultFormatter: formatResults
+        });
+        Y.one('#input-bn').ac.on('select', onAddClick);
     });
 </script>
 {% endblock content %}

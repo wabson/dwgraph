@@ -158,6 +158,14 @@ def __get_locations_query(year, loc_table, boat_nums):
     query_params = { 'year': int(year), 'loc_table': loc_table, 'boats': ', '.join([str(int(bn)) for bn in boat_nums])}
     return "select %(loc_table)s.*, firstname_1, firstname_2, surname_1, surname_2, club_1, club_2, class_position as position, class_results.elapsed_time from %(loc_table)s JOIN class_results on %(loc_table)s.boat_number=class_results.boat_number and %(loc_table)s.year=class_results.year where class_results.year = '%(year)s' and class_results.boat_number IN (%(boats)s)" % query_params
 
+def __get_crew_query(year, text):
+    query_params = { 'year': int(year), 'text': text}
+    return "select boat_number, firstname_1, firstname_2, surname_1, surname_2, club_1, club_2 from class_results where class_results.year = '%(year)s' and (surname_1 LIKE '%%%(text)s%%' OR surname_2 LIKE '%%%(text)s%%')" % query_params
+
+def __get_crew_by_num(year, boat_num):
+    query_params = { 'year': int(year), 'boat_num': int(boat_num)}
+    return "select boat_number, firstname_1, firstname_2, surname_1, surname_2, club_1, club_2 from class_results where class_results.year = '%(year)s' and boat_number = '%(boat_num)s'" % query_params
+
 def __get_query_data(query):
     from django.db import connections
     cursor = connections['data'].cursor()
@@ -177,3 +185,19 @@ def data(request):
     data = [{'boat_number': row['boat_number'], 'crew': build_crew_data(row), 'position': row['position'], 'time': row['elapsed_time'], 'locations': calculate_crew_data(year, row), 'retired': row['status'].startswith('rtd'), 'disqualified': row['status'].startswith('dsq')} for row in rows]
     _d = {'results': [{'boat_number': d['boat_number'], 'position': d['position'] , 'time': d['time'], 'crew': d['crew'], 'locations': get_result_locations(d['locations'])} for d in data], 'year': year}
     return HttpResponse('%s(%s)' % (cb, json.dumps(_d)), mimetype='application/json')
+
+
+def crew_data(request):
+    year = int(request.GET.get('y', '0'))
+    query = request.GET.get('q', '')
+    cb = request.GET.get('callback', 'callback')
+    data = []
+    if len(query) >= 3:
+        if re.match('\d+$', query):
+            rows = __get_query_data(__get_crew_by_num(year, int(query)))
+        else:
+            filtered_query = re.sub('[^\w -]', '', query)
+            rows = __get_query_data(__get_crew_query(year, filtered_query))
+        data = [{'boat_number': row['boat_number'], 'crew': build_crew_data(row)} for row in rows]
+    _d = {'results': data, 'year': year}
+    return HttpResponse('%s(%s)' % (cb, json.dumps(_d)), content_type='application/json')

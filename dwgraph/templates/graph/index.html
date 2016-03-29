@@ -10,6 +10,12 @@
     color: #fff;
     text-shadow: 2px 4px 3px rgba(0,0,0,0.3);
 }
+.hero-unit .yui3-aclist-list {
+    font-size: 14px;
+}
+.hero-unit .yui3-aclist-list li {
+    line-height: 20px;
+}
 </style>
 {% endblock header %}
 
@@ -17,8 +23,8 @@
     <div class="dw hero-unit">
         <h1>How did you do on DW?</h1>
         <form>
-        <p>Enter a boat number to get started</p>
-        <input type="text" name="bn" value="" placeholder="Boat Number" /><br />
+        <p>Enter a boat number or search for crews by surname to get started</p>
+        <input type="text" name="bn" value="" placeholder="Search crews" /><br />
         <button type="button" class="btn btn-primary btn-large" id="submit-btn">Show Graph &raquo;</button>
         </form>
       </div>
@@ -26,13 +32,25 @@
     <p>View results for <a href="graph#bn=424%2C393%2C379%2C398%2C430%2C371%2C392%2C381%2C388%2C316">top crews</a> (sub-20 hours)</p>
     <p>View historic results - {% for y in archives reversed %}<a href="/{{y}}">{{y}}</a>{% if not forloop.last %},{% endif %} {% endfor %}</p>
 <script>
+function formatLabel(result) {
+    var crew = result.crew, names = crew[0].firstname + " " + crew[0].surname;
+    if (crew.length > 1) {
+        names += " & " + crew[1].firstname + " " + crew[1].surname;
+    }
+    return result.boat_number + " " + names;
+}
 // Create a YUI sandbox on your page.
-YUI().use('node', 'event', 'event-key', function (Y) {
+YUI().use('node', 'event', 'event-key', 'autocomplete', 'highlight', function (Y) {
     function loadGraph(e) {
-        var bn = Y.one("input").get("value");
+        var bn = e.result ? e.result.text : Y.one("input").get("value");
         if (bn) {
             window.location = window.location.protocol + "//" + window.location.host + "/graph#bn=" + bn;
         }
+    }
+    function formatResults(query, results) {
+        return Y.Array.map(results, function (result) {
+            return '<div>' + Y.Highlight.all(formatLabel(result.raw), query) + '</div>';
+        });
     }
     Y.one("input").focus();
     Y.one("input").on("key", function(e) {
@@ -45,6 +63,16 @@ YUI().use('node', 'event', 'event-key', function (Y) {
         e.stopPropagation();
         loadGraph(e);
     });
+    Y.one('input').plug(Y.Plugin.AutoComplete, {
+        source: '/crewdata?q={query}&callback={callback}&y={{ year }}',
+        resultListLocator: 'results',
+        resultTextLocator: function(crew) {
+            return crew.boat_number;
+        },
+        resultFormatter: formatResults
+    });
+    Y.one('input').ac.on('select', loadGraph);
+    Y.one('body').addClass('yui3-skin-sam');
 });
 </script>
 {% endblock content %}

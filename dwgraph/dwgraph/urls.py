@@ -10,6 +10,7 @@ urlpatterns = patterns('',
     url(r'^graph$', 'graph.views.graph', name='graph'),
     url(r'^\d{4}$', 'graph.views.graph_archive', name='graph_archive'),
     url(r'^data$', 'graph.views.data', name='data'),
+    url(r'^crewdata$', 'graph.views.crew_data', name='crew_data'),
     # url(r'^dwgraph/', include('dwgraph.foo.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:
