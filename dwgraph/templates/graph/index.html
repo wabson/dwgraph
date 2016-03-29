@@ -3,34 +3,37 @@
 {% block header %}
 <title>DW Graph</title>
 <style type="text/css">
-.hero-unit.dw {
+.jumbotron.dw {
     background: url(static/img/img_3217.jpg);
 }
-.hero-unit.dw h1, .hero-unit.dw p {
+.jumbotron.dw h1, .jumbotron.dw p {
     color: #fff;
-    text-shadow: 2px 4px 3px rgba(0,0,0,0.3);
+    text-shadow: 2px 4px 3px rgba(0,0,0,0.6);
 }
-.hero-unit .yui3-aclist-list {
+.jumbotron .yui3-aclist-list {
     font-size: 14px;
 }
-.hero-unit .yui3-aclist-list li {
+.jumbotron .yui3-aclist-list li {
     line-height: 20px;
 }
 </style>
 {% endblock header %}
 
 {% block content %}
-    <div class="dw hero-unit">
+    <div class="dw jumbotron">
         <h1>How did you do on DW?</h1>
-        <form>
+        <form class="form-inline">
         <p>Enter a boat number or search for crews by surname to get started</p>
-        <input type="text" name="bn" value="" placeholder="Search crews" /><br />
+        <div class="form-group">
+        <input type="text" name="bn" value="" class="form-control" placeholder="Search crews" />
+        </div>
+        <div class="form-group">
         <button type="button" class="btn btn-primary btn-large" id="submit-btn">Show Graph &raquo;</button>
+        </div>
         </form>
       </div>
     <p>The DW Graph attempts to give an indication of overnight crews' relative performances over the course of the <a href="http://www.dwrace.org.uk/">Devizes to Westminster Race</a>, using a graphical display. The data displayed is calculated from the official <a href="http://www.dwrace.org.uk/results/{{year}}/Progress/LocationOvernight.html">checkpoint times</a> available from the race site. We value feedback on the site but please raise any issues found with the data itself with the race organisers.</p>
     <p>View results for <a href="graph#bn=408%2C354%2C335%2C404%2C419%2C358%2C396%2C382%2C410%2C395">top crews</a> (sub-20 hours)</p>
-    <p>View historic results - {% for y in archives reversed %}<a href="/{{y}}">{{y}}</a>{% if not forloop.last %},{% endif %} {% endfor %}</p>
 <script>
 function formatLabel(result) {
     var crew = result.crew, names = crew[0].firstname + " " + crew[0].surname;
@@ -64,7 +67,7 @@ YUI().use('node', 'event', 'event-key', 'autocomplete', 'highlight', function (Y
         loadGraph(e);
     });
     Y.one('input').plug(Y.Plugin.AutoComplete, {
-        source: '/crewdata?q={query}&callback={callback}&y={{ year }}',
+        source: '/crewdata?q={query}&callback={callback}&y={{ current_year }}',
         resultListLocator: 'results',
         resultTextLocator: function(crew) {
             return crew.boat_number;

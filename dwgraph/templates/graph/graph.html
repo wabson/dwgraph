@@ -162,7 +162,7 @@ function redrawChart() {
             Y.log("All numbers added already, exiting addSeries", "debug");
             return;
          }
-         var queryUrl = "?bn=" + encodeURIComponent(num) + "&y=" + {{ year }};
+         var queryUrl = "?bn=" + encodeURIComponent(num) + "&y=" + {{ current_year }};
          Y.log("Sending query + " + queryUrl, "debug");
          locationsDataSource.sendRequest({
             request: queryUrl,
@@ -266,7 +266,7 @@ function redrawChart() {
         Y.one('body').addClass('yui3-skin-sam');
 
         Y.one('#input-bn').plug(Y.Plugin.AutoComplete, {
-            source: '/crewdata?q={query}&callback={callback}&y={{ year }}',
+            source: '/crewdata?q={query}&callback={callback}&y={{ current_year }}',
             resultListLocator: 'results',
             resultTextLocator: function(crew) {
                 return crew.boat_number;

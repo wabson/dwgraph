@@ -25,7 +25,18 @@
     </div>
     <div class="collapse navbar-collapse">
       <ul class="nav navbar-nav">
-        {% if year %}<li><a href="/{{year}}">{{year}}</a></li>{% endif %}
+        {% if year %}<li {% if current_year == year %} class="active"{% endif %}><a href="/{{year}}">{{year}}</a></li>{% endif %}
+        {% if last_year %}<li {% if current_year == last_year %} class="active"{% endif %}><a href="/{{last_year}}">{{last_year}}</a></li>{% endif %}
+        {% if archives %}
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Archive <span class="caret"></span></a>
+          <ul class="dropdown-menu">
+          {% for y in archives reversed %}
+            <li><a href="/{{y}}">{{y}}</a></li>
+          {% endfor %}
+          </ul>
+        </li>
+        {% endif %}
       </ul>
     </div><!-- /.navbar-collapse -->
   </div><!-- /.container- -->

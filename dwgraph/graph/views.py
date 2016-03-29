@@ -8,16 +8,18 @@ from datetime import datetime, timedelta, date
 # Create your views here.
 
 this_year = 2016
+last_year = this_year - 1
+archives = range(2007, this_year - 1)
 
 def home(request):
-    return render_to_response('graph/index.html', {'year': this_year, 'archives': range(2007, this_year)}, context_instance=RequestContext(request))
+    return render_to_response('graph/index.html', {'current_year': this_year, 'year': this_year, 'last_year': last_year, 'archives': archives}, context_instance=RequestContext(request))
 
 def graph(request):
-    return render_to_response('graph/graph.html', {'year': this_year}, context_instance=RequestContext(request))
+    return render_to_response('graph/graph.html', {'current_year': this_year, 'year': this_year, 'last_year': last_year, 'archives': archives}, context_instance=RequestContext(request))
 
 def graph_archive(request):
-    year = int(request.path[1:]) # Strip off initial '/'
-    return render_to_response('graph/graph.html', {'year':year}, context_instance=RequestContext(request))
+    current_year = int(request.path[1:]) # Strip off initial '/'
+    return render_to_response('graph/graph.html', {'current_year': current_year, 'year': this_year, 'last_year': last_year, 'archives': archives}, context_instance=RequestContext(request))
 
 locations = ['devizes', 'pewsey', 'hford', 'newbury', 'aldermaston', 'reading', 'marsh', 'marlow', 'bray', 'windsor', 'shepperton', 'teddington', 'westminster']
 
