@@ -1,0 +1,5 @@
+**/*.pyc
+static/bootstrap/
+static/jquery/
+static/yui3/
+
