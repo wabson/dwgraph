@@ -1,0 +1,6 @@
+if [ -f bin/install_nodejs ]; then
+    echo "-----> Running install_nodejs"
+    chmod +x bin/install_nodejs
+    echo "-----> Install bower dependencies"
+    bin/install_nodejs && npm install -g bower && bower install
+fi
