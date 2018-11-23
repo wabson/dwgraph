@@ -1,4 +1,4 @@
-export PATH="$PATH:.heroku/python/bin/node"
+export PATH="$PATH:$(pwd)/.heroku/python/bin/node"
 
 if [ -f bin/install_nodejs ]; then
     echo "-----> Running install_nodejs"
