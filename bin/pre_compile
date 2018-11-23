@@ -3,6 +3,8 @@ export PATH="$PATH:$(pwd)/.heroku/python/bin/node"
 if [ -f bin/install_nodejs ]; then
     echo "-----> Running install_nodejs"
     chmod +x bin/install_nodejs
+    bin/install_nodejs
     echo "-----> Install bower dependencies"
-    bin/install_nodejs && npm install -g bower && .heroku/vendor/node/lib/node_modules/bower/bin/bower install
+    ls $(pwd)/.heroku/python/bin/node && echo $PATH
+    npm install -g bower && .heroku/vendor/node/lib/node_modules/bower/bin/bower install
 fi
