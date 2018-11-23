@@ -1,5 +1,3 @@
 **/*.pyc
-static/bootstrap/
-static/jquery/
-static/yui3/
-
+static/
+bower_components
