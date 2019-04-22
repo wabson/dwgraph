@@ -10,6 +10,10 @@ from datetime import datetime, timedelta, date
 this_year = 2019
 last_year = this_year - 1
 archives = range(2007, this_year - 1)
+try:
+    archives.remove(2018)
+except Exception as e:
+    pass
 
 def home(request):
     top_crews = [371, 429, 377, 408, 410, 417, 434, 304, 447, 357 ]
