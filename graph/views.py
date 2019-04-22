@@ -13,7 +13,8 @@ archives = range(2007, this_year - 1)
 
 def home(request):
     top_crews = [371, 429, 377, 408, 410, 417, 434, 304, 447, 357 ]
-    return render_to_response('graph/index.html', {'current_year': this_year, 'year': this_year, 'last_year': last_year, 'archives': archives, 'top_crews': top_crews}, context_instance=RequestContext(request))
+    checkpoint_times_url = 'http://results.dwrace.co.uk/results/%s/Progress/LocationOvernight.html' % (this_year,)
+    return render_to_response('graph/index.html', {'current_year': this_year, 'year': this_year, 'last_year': last_year, 'archives': archives, 'top_crews': top_crews, 'checkpoint_times_url': checkpoint_times_url}, context_instance=RequestContext(request))
 
 def graph(request):
     return render_to_response('graph/graph.html', {'current_year': this_year, 'year': this_year, 'last_year': last_year, 'archives': archives}, context_instance=RequestContext(request))
