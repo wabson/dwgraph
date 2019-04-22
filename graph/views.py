@@ -7,12 +7,13 @@ from datetime import datetime, timedelta, date
 
 # Create your views here.
 
-this_year = 2016
+this_year = 2019
 last_year = this_year - 1
 archives = range(2007, this_year - 1)
 
 def home(request):
-    return render_to_response('graph/index.html', {'current_year': this_year, 'year': this_year, 'last_year': last_year, 'archives': archives}, context_instance=RequestContext(request))
+    top_crews = [371, 429, 377, 408, 410, 417, 434, 304, 447, 357 ]
+    return render_to_response('graph/index.html', {'current_year': this_year, 'year': this_year, 'last_year': last_year, 'archives': archives, 'top_crews': top_crews}, context_instance=RequestContext(request))
 
 def graph(request):
     return render_to_response('graph/graph.html', {'current_year': this_year, 'year': this_year, 'last_year': last_year, 'archives': archives}, context_instance=RequestContext(request))
