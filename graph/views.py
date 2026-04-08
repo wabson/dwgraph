@@ -115,7 +115,7 @@ def calculate_crew_data(year, row):
             stage_dist = sdist - lastdist
             stage_time = atime - lasttime if lasttime is not None else None
             stage_speed = stage_dist / (stage_time.seconds / 3600.0) if (stage_time is not None and stage_time.seconds > 0) else None
-            if stage_speed > 20:
+            if stage_speed is not None and stage_speed > 20:
                 stage_speed = None
             stage_data = {
                 'split_dist': sdist,
