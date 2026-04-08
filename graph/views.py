@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, date
 
 this_year = 2019
 last_year = this_year - 1
-archives = range(2007, this_year - 1)
+archives = list(range(2007, this_year - 1))
 try:
     archives.remove(2018)
 except Exception as e:
@@ -184,7 +184,7 @@ def __get_query_data(query):
     try:
         cursor.execute(query);
         return __dictfetchall(cursor)
-    except ValueError, e:
+    except ValueError as e:
         return None
 
 def data(request):
