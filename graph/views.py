@@ -1,6 +1,5 @@
-from django.shortcuts import render, redirect
-from django.http import HttpResponse, Http404
-import json
+from django.shortcuts import render
+from django.http import JsonResponse
 import re
 from datetime import datetime, timedelta, date
 
@@ -189,18 +188,16 @@ def __get_query_data(query):
 def data(request):
     year = int(request.GET.get('y', '0'))
     boat_nums = [int(x) for x in request.GET.get('bn', '0').split(',') if re.match('\d+$', x) is not None]
-    cb = request.GET.get('callback', 'callback')
     rows = __get_query_data(__get_overnight_locations_query(year, boat_nums))
     rows.extend(__get_query_data(__get_fourday_locations_query(year, boat_nums)))
     data = [{'boat_number': row['boat_number'], 'crew': build_crew_data(row), 'position': row['position'], 'time': row['elapsed_time'], 'locations': calculate_crew_data(year, row), 'retired': row['status'].startswith('rtd'), 'disqualified': row['status'].startswith('dsq')} for row in rows]
     _d = {'results': [{'boat_number': d['boat_number'], 'position': d['position'] , 'time': d['time'], 'crew': d['crew'], 'locations': get_result_locations(d['locations'])} for d in data], 'year': year}
-    return HttpResponse('%s(%s)' % (cb, json.dumps(_d)), content_type='application/json')
+    return JsonResponse(_d)
 
 
 def crew_data(request):
     year = int(request.GET.get('y', '0'))
     query = request.GET.get('q', '')
-    cb = request.GET.get('callback', 'callback')
     data = []
     if len(query) >= 3:
         if re.match('\d+$', query):
@@ -210,4 +207,4 @@ def crew_data(request):
             rows = __get_query_data(__get_crew_query(year, filtered_query))
         data = [{'boat_number': row['boat_number'], 'crew': build_crew_data(row)} for row in rows]
     _d = {'results': data, 'year': year}
-    return HttpResponse('%s(%s)' % (cb, json.dumps(_d)), content_type='application/json')
+    return JsonResponse(_d)

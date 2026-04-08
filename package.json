@@ -16,7 +16,5 @@
     "url": "https://github.com/wabson/dwgraph/issues"
   },
   "homepage": "https://github.com/wabson/dwgraph#readme",
-  "dependencies": {
-    "bower": "^1.8.14"
-  }
+  "dependencies": {}
 }

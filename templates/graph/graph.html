@@ -1,265 +1,235 @@
 {% extends "base.html" %}
 
 {% block header %}
-<script type="text/javascript" src="https://www.google.com/jsapi"></script>
-<script type="text/javascript">
-// Load the Visualization API and the piechart package.
-google.load('visualization', '1.0', {'packages':['corechart', 'table']});
-</script>
-<style type="text/css">
-#graph svg {
-    border: 1px solid #ccc;
-}
-.social  {
-    margin-bottom: 1em;
-}
-h1.graph-hdr {
-    margin-bottom: 0.5em;
-}
-#graph {
-    margin-bottom: 1em;
-}
-form {
-    margin-bottom: 10px;
-}
-</style>
 <title>DW Graph</title>
+<script src="https://www.gstatic.com/charts/loader.js"></script>
+<style>
+#graph svg { border: 1px solid #ccc; }
+.social { margin-bottom: 1em; }
+h1.graph-hdr { margin-bottom: 0.5em; }
+#graph { margin-bottom: 1em; }
+form { margin-bottom: 10px; }
+#autocomplete-list { z-index: 1000; max-height: 300px; overflow-y: auto; }
+</style>
 {% endblock header %}
 
 {% block content %}
 <h1 class="graph-hdr"></h1>
-            <form class="add-form form-inline">
-            <div class="form-group">
-              <label for="input-bn"></label>
-              <input id="input-bn" class="form-control" type="text" placeholder="Search crews">
-              <button id="add-form-btn" type="submit" class="btn btn-default">Add to chart</button>
-            </div>
-            </form>
+<form class="d-flex gap-2 align-items-start mb-3" id="add-form">
+    <div style="position: relative;">
+        <input id="input-bn" class="form-control" type="text" placeholder="Search crews" autocomplete="off">
+        <ul id="autocomplete-list" class="dropdown-menu" style="display:none; position:absolute; width:100%;"></ul>
+    </div>
+    <button id="add-form-btn" type="submit" class="btn btn-secondary">Add to chart</button>
+</form>
 <div class="messages"></div>
-    <div id="graph"></div>
-    <div id="table"></div>
-    <p><em>The graph shows the speed between each race checkpoint and the previous one. Speeds shown are calculated based on the checkpoint times published on the results web page and the distances between checkpoints.</em></p>
+<div id="graph"></div>
+<div id="table"></div>
+<p><em>The graph shows the speed between each race checkpoint and the previous one. Speeds shown are calculated based on the checkpoint times published on the results web page and the distances between checkpoints.</em></p>
+
 <script>
-var checkpoints = [
-{id: 'pewsey', label: 'Pewsey', type: 'number'},
-{id: 'hford', label: 'Hungerford', type: 'number'},
-{id: 'newbury', label: 'Newbury', type: 'number'},
-{id: 'aldermaston', label: 'Aldermaston', type: 'number'},
-{id: 'reading', label: 'Reading', type: 'number'},
-{id: 'marsh', label: 'Marsh', type: 'number'},
-{id: 'marlow', label: 'Marlow', type: 'number'},
-{id: 'bray', label: 'Bray', type: 'number'},
-{id: 'windsor', label: 'Windsor', type: 'number'},
-{id: 'shepperton', label: 'Shepperton', type: 'number'},
-{id: 'teddington', label: 'Teddington', type: 'number'},
-{id: 'westminster', label: 'Westminster', type: 'number'}
-],
-    cols = [{id: 'Location', type: 'string'}], rows = [];
+const checkpoints = [
+    {id: 'pewsey',      label: 'Pewsey'},
+    {id: 'hford',       label: 'Hungerford'},
+    {id: 'newbury',     label: 'Newbury'},
+    {id: 'aldermaston', label: 'Aldermaston'},
+    {id: 'reading',     label: 'Reading'},
+    {id: 'marsh',       label: 'Marsh'},
+    {id: 'marlow',      label: 'Marlow'},
+    {id: 'bray',        label: 'Bray'},
+    {id: 'windsor',     label: 'Windsor'},
+    {id: 'shepperton',  label: 'Shepperton'},
+    {id: 'teddington',  label: 'Teddington'},
+    {id: 'westminster', label: 'Westminster'},
+];
+
+let chart, chartData, chartOptions;
+
+// --- Hash utilities ---
+
+function getHashBn() {
+    return new URLSearchParams(window.location.hash.slice(1)).get('bn') || '';
+}
+
+function setHashBn(value, replace = false) {
+    const hash = value ? '#bn=' + value : '#';
+    if (replace) window.history.replaceState(null, '', hash);
+    else window.location.hash = 'bn=' + value;
+}
+
+// --- Chart data helpers ---
+
+function boatColumn(n) {
+    for (let i = 1; i < chartData.getNumberOfColumns(); i++) {
+        if (chartData.getColumnId(i) === String(n)) return i - 1;
+    }
+    return -1;
+}
+
+function isBoatAdded(n) { return boatColumn(n) > -1; }
 
 function getBoatSeries() {
-    var boats = [];
-    for (var i=1; i<chartData.getNumberOfColumns(); i++) {
+    const boats = [];
+    for (let i = 1; i < chartData.getNumberOfColumns(); i++) {
         boats.push(chartData.getColumnId(i));
     }
     return boats;
 }
 
 function removeBoat(n) {
-    var boatCol = boatColumn(n);
-    while (boatCol > -1) {
-        chartData.removeColumn(boatCol+1);
-        boatCol = boatColumn(n);
+    let col = boatColumn(n);
+    while (col > -1) {
+        chartData.removeColumn(col + 1);
+        col = boatColumn(n);
     }
-} 
-
-function boatColumn(n) {
-    for (var i=1; i<chartData.getNumberOfColumns(); i++) {
-        if (chartData.getColumnId(i) == n) {
-            return i-1;
-        }
-    }
-    return -1;
-}
-
-function isBoatAdded(n) {
-    return boatColumn(n) > -1;
 }
 
 function formatLabel(result) {
-    var crew = result.crew, names = crew[0].firstname + " " + crew[0].surname;
-    if (crew.length > 1) {
-        names += " & " + crew[1].firstname + " " + crew[1].surname;
-    }
-    return result.boat_number + " " + names;
+    const crew = result.crew;
+    let names = crew[0].firstname + ' ' + crew[0].surname;
+    if (crew.length > 1) names += ' & ' + crew[1].firstname + ' ' + crew[1].surname;
+    return result.boat_number + ' ' + names;
 }
 
-function redrawChart() {
-    chart.draw(chartData, chartOptions);
-}
+// --- Data loading ---
 
-                    // Set chart options
-                    var chartOptions = {
-                        'width': 1138, // container is 1140 but the graph has 1px border each side
-                        'height': 450,
-                        'titlePosition': 'none',
-                        legend: {
-                            textStyle: {color: 'black', fontName: 'Arial', fontSize: 12}
-                        },
-                        hAxis: {
-                            title: '',
-                            textStyle: {color: 'black', fontName: 'Arial', fontSize: 12},
-                            slantedText: false
-                        },
-                        vAxis: {
-                            title: 'Speed (mph)',
-                            textStyle: {color: 'black', fontName: 'Arial', fontSize: 12}
-                        }
-                    };
-                    var chart = new google.visualization.LineChart(document.getElementById('graph'));
-                    var chartData = new google.visualization.DataTable({cols: cols, rows: rows});
-                    for (var j=0; j<checkpoints.length; j++) {
-                        chartData.addRow([{v: checkpoints[j].label }]);
-                    }
+async function addSeries(num) {
+    if (!num) return;
+    const numbers = num.split(',').filter(Boolean);
+    if (!numbers.length) return;
+    if (numbers.every(n => isBoatAdded(n))) return;
 
-    YUI().use('node', 'event', 'event-key', 'datasource', 'history', 'console', 'autocomplete', 'highlight', function (Y) {
+    const res = await fetch('/data?bn=' + encodeURIComponent(num) + '&y={{ current_year }}');
+    const data = await res.json();
+    const results = data.results;
 
-        var history = new Y.HistoryHash({
-            initialState: {
-                bn: ""
-            }
-        });
+    let hdr = 'Results for ';
+    let messages = '';
 
-        var locationsDataSource = new Y.DataSource.Get({
-            source: "/data"
-        });
-
-        function addSeries(num) {
-          if (!num) {
-            Y.log("No number specified, exiting addSeries", "debug");
-            return;
-          }
-          var allAdded = true, numbers = num.split(',');
-          Y.Array.each((num||'').split(','), function(item, index, arr) {
-            if (!isBoatAdded(item)) {
-                allAdded = false;
-            }
-         });
-         if (allAdded) {
-            Y.log("All numbers added already, exiting addSeries", "debug");
-            return;
-         }
-         var queryUrl = "?bn=" + encodeURIComponent(num) + "&y=" + {{ current_year }};
-         Y.log("Sending query + " + queryUrl, "debug");
-         locationsDataSource.sendRequest({
-            request: queryUrl,
-            on: {
-                success: function(e) {
-                    var results = e.data.results, messages = "", hdr = "Results for ";
-                    Y.log("API returned " + results.length + " results", "debug");
-                    for (var i=0; i<results.length; i++) {
-                        var locations = results[i].locations;
-                        if (!isBoatAdded(results[i].boat_number)) {
-                            Y.log("Adding boat " + results[i].boat_number + " to chart data", "debug");
-                            chartData.addColumn({ id: results[i].boat_number, label: formatLabel(results[i]), type: 'number' });
-                            colNum = chartData.getNumberOfColumns();
-                            Y.log("checkpoints.length: " + checkpoints.length, "debug");
-                            for (var j=0; j<checkpoints.length; j++) {
-                                var  row = rows[j],
-                                    loc = locations[checkpoints[j]['id']],
-                                    value = loc.retired !== true && loc.speed !== null ? Math.round(loc.speed*100)/100 : null;
-                                Y.log("Adding boat " + results[i].boat_number + " data point [" + (colNum-1) + "][" + j + "]=" + value + " to chart data", "debug");
-                                chartData.setCell(j, colNum-1, value);
-                            }
-                        } else {
-                            Y.log("Skipped adding boat " + results[i].boat_number + " to chart data, already there", "debug");
-                        }
-                        hdr += (i > 0 ? ', ' : '') + results[i].crew[0].surname + (results[i].crew[1] ? (" & " + results[i].crew[1].surname) : "");
-                    }
-                    Y.log(cols, "debug");
-                    Y.log(rows, "debug");
-    
-                    if (chartData.getNumberOfColumns() > 1) {
-                        chart.draw(chartData, chartOptions);
-                    }
-
-                    //var table = new google.visualization.Table(document.getElementById('table'));
-                    //table.draw(chartData, {showRowNumber: true});
-                    
-                    var newBn = ''; // Remove boats which were not returned by the XHR
-                    Y.Array.each(numbers, function(item, index, arr) {
-                        if (isBoatAdded(item)) {
-                            newBn += isBoatAdded(item) ? (',' + item) : '';
-                        } else {
-                            messages += '<p class="text-error">Boat number ' + item + ' could not be found</p>';
-                        }
-                    });
-                    Y.one(".messages").setHTML(messages);
-                    if (newBn.slice(1) != history.get('bn')) {
-                        history.replaceValue('bn', newBn.slice(1));
-                    }
-                    Y.one("h1").setHTML(hdr);
-                    document.title = "DW Graph - " + hdr;
-                },
-                failure: function(e) {
-                    alert(e.error.message);
-                }
-            }
-        });
-    }
-        Y.on('history:change', function (e) {
-            Y.log("history:change event", "debug");
-            var selected = (history.get('bn') || '').split(','), displayed = getBoatSeries();
-            Y.log("Selected boats: " + selected, "debug");
-            Y.log("Displayed boats: " + displayed, "debug");
-            for (var i=0; i<displayed.length; i++) {
-               var isSelected = Y.Array.indexOf(selected, displayed[i]) > -1;
-               if (!isSelected) {
-                   Y.log("Removing " + displayed[i], "debug");
-                   removeBoat(displayed[i]);
-                   chart.draw(chartData, chartOptions);
-               }
-            }
-            addSeries(history.get('bn') || '');
-        });
-        addSeries(history.get('bn'));
-
-        function onAddClick(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            var bn = e.result ? e.result.text : Y.one("#input-bn").get("value");
-            if (bn && !isBoatAdded(parseInt(bn, 10))) {
-                var oldValue = history.get('bn');
-                Y.log("Old value: " + oldValue, "debug",  "graph", "debug");
-                var newValue = (oldValue ? oldValue + ',' : '') + bn;
-                Y.log("New value: " + newValue, "debug",  "graph", "debug");
-                if (newValue != oldValue) {
-                    Y.log("Adding " + newValue + " to history", "debug");
-                    history.addValue('bn', newValue);
-                }
-            }
-            Y.one("#input-bn").set("value", "");
-        }
-
-        function formatResults(query, results) {
-            return Y.Array.map(results, function (result) {
-                return '<div>' + Y.Highlight.all(formatLabel(result.raw), query) + '</div>';
+    results.forEach((result, i) => {
+        if (!isBoatAdded(result.boat_number)) {
+            chartData.addColumn({id: String(result.boat_number), label: formatLabel(result), type: 'number'});
+            const colNum = chartData.getNumberOfColumns();
+            checkpoints.forEach((cp, j) => {
+                const loc = result.locations[cp.id];
+                const value = loc && loc.retired !== true && loc.speed !== null
+                    ? Math.round(loc.speed * 100) / 100
+                    : null;
+                chartData.setCell(j, colNum - 1, value);
             });
         }
-
-        Y.one("#add-form-btn").on("click", onAddClick);
-        //Y.one("#input-bn").on("key", onAddClick, "enter");
-        Y.one("#input-bn").focus();
-        Y.one('body').addClass('yui3-skin-sam');
-
-        Y.one('#input-bn').plug(Y.Plugin.AutoComplete, {
-            source: '/crewdata?q={query}&callback={callback}&y={{ current_year }}',
-            resultListLocator: 'results',
-            resultTextLocator: function(crew) {
-                return crew.boat_number;
-            },
-            resultFormatter: formatResults
-        });
-        Y.one('#input-bn').ac.on('select', onAddClick);
+        hdr += (i > 0 ? ', ' : '') + result.crew[0].surname +
+               (result.crew[1] ? ' & ' + result.crew[1].surname : '');
     });
+
+    if (chartData.getNumberOfColumns() > 1) chart.draw(chartData, chartOptions);
+
+    let newBn = '';
+    numbers.forEach(item => {
+        if (isBoatAdded(item)) {
+            newBn += (newBn ? ',' : '') + item;
+        } else {
+            messages += '<p class="text-danger">Boat number ' + item + ' could not be found</p>';
+        }
+    });
+
+    document.querySelector('.messages').innerHTML = messages;
+    if (newBn !== getHashBn()) setHashBn(newBn, true);
+    document.querySelector('h1').textContent = hdr;
+    document.title = 'DW Graph - ' + hdr;
+}
+
+function handleHashChange() {
+    const selected = getHashBn().split(',').filter(Boolean);
+    const displayed = getBoatSeries();
+
+    displayed.forEach(boat => {
+        if (!selected.includes(boat)) {
+            removeBoat(boat);
+            if (chartData.getNumberOfColumns() > 1) chart.draw(chartData, chartOptions);
+        }
+    });
+
+    addSeries(getHashBn());
+}
+
+// --- Autocomplete ---
+
+const acInput = document.getElementById('input-bn');
+const acList = document.getElementById('autocomplete-list');
+let debounceTimer;
+
+function showSuggestions(results) {
+    acList.innerHTML = '';
+    if (!results.length) { acList.style.display = 'none'; return; }
+    results.forEach(result => {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.className = 'dropdown-item';
+        a.href = '#';
+        a.textContent = formatLabel(result);
+        a.addEventListener('mousedown', e => {
+            e.preventDefault();
+            acList.style.display = 'none';
+            addBoat(String(result.boat_number));
+        });
+        li.appendChild(a);
+        acList.appendChild(li);
+    });
+    acList.style.display = 'block';
+}
+
+async function fetchSuggestions(query) {
+    const res = await fetch('/crewdata?q=' + encodeURIComponent(query) + '&y={{ current_year }}');
+    const data = await res.json();
+    showSuggestions(data.results);
+}
+
+acInput.addEventListener('input', function () {
+    clearTimeout(debounceTimer);
+    const query = this.value.trim();
+    if (query.length < 3) { acList.style.display = 'none'; return; }
+    debounceTimer = setTimeout(() => fetchSuggestions(query), 200);
+});
+
+acInput.addEventListener('blur', () => { acList.style.display = 'none'; });
+
+function addBoat(bn) {
+    if (!bn || isBoatAdded(parseInt(bn, 10))) return;
+    const oldValue = getHashBn();
+    const newValue = (oldValue ? oldValue + ',' : '') + bn;
+    if (newValue !== oldValue) setHashBn(newValue);
+    acInput.value = '';
+}
+
+document.getElementById('add-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const bn = acInput.value.trim();
+    acList.style.display = 'none';
+    addBoat(bn);
+});
+
+// --- Chart init (called once Google Charts is ready) ---
+
+function init() {
+    chartOptions = {
+        width: document.getElementById('graph').offsetWidth || 1138,
+        height: 450,
+        titlePosition: 'none',
+        legend: {textStyle: {color: 'black', fontName: 'Arial', fontSize: 12}},
+        hAxis: {title: '', textStyle: {color: 'black', fontName: 'Arial', fontSize: 12}, slantedText: false},
+        vAxis: {title: 'Speed (mph)', textStyle: {color: 'black', fontName: 'Arial', fontSize: 12}},
+    };
+    chart = new google.visualization.LineChart(document.getElementById('graph'));
+    chartData = new google.visualization.DataTable({cols: [{id: 'Location', type: 'string'}], rows: []});
+    checkpoints.forEach(cp => chartData.addRow([{v: cp.label}]));
+
+    handleHashChange();
+    window.addEventListener('hashchange', handleHashChange);
+    acInput.focus();
+}
+
+google.charts.load('current', {'packages': ['corechart']});
+google.charts.setOnLoadCallback(init);
 </script>
 {% endblock content %}

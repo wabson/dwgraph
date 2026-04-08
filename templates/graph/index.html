@@ -2,83 +2,100 @@
 
 {% block header %}
 <title>DW Graph</title>
-<style type="text/css">
-.jumbotron.dw {
-    background: url(static/img/img_3217.jpg);
+<style>
+.dw-hero {
+    background: url({{STATIC_URL}}img/img_3217.jpg) center/cover no-repeat;
+    padding: 2rem 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 0.3rem;
 }
-.jumbotron.dw h1, .jumbotron.dw p {
+.dw-hero h1, .dw-hero p {
     color: #fff;
     text-shadow: 2px 4px 3px rgba(0,0,0,0.6);
 }
-.jumbotron.dw p {
-    font-weight: initial;
-}
-.jumbotron .yui3-aclist-list {
-    font-size: 14px;
-}
-.jumbotron .yui3-aclist-list li {
-    line-height: 20px;
-}
+.dw-hero p { font-weight: normal; }
+#autocomplete-list { z-index: 1000; max-height: 300px; overflow-y: auto; }
 </style>
 {% endblock header %}
 
 {% block content %}
-    <div class="dw jumbotron">
-        <h1>How did you do on DW?</h1>
-        <form class="form-inline">
-        <p>Enter a boat number or search for crews by surname to get started</p>
-        <div class="form-group">
-        <input type="text" name="bn" value="" class="form-control" placeholder="Search crews" />
+<div class="dw-hero">
+    <h1>How did you do on DW?</h1>
+    <p>Enter a boat number or search for crews by surname to get started</p>
+    <div class="d-flex gap-2 align-items-start">
+        <div style="position: relative;">
+            <input type="text" name="bn" value="" class="form-control" placeholder="Search crews" id="search-input" autocomplete="off" />
+            <ul id="autocomplete-list" class="dropdown-menu" style="display:none; position:absolute; width:100%;"></ul>
         </div>
-        <div class="form-group">
-        <button type="button" class="btn btn-primary btn-large" id="submit-btn">Show Graph &raquo;</button>
-        </div>
-        </form>
-      </div>
-      <p>The DW Graph gives an indication of overnight and four-day crews' relative performances over the course of the <a href="http://www.dwrace.org.uk/">Devizes to Westminster Race</a>, using a graphical display. The data displayed is calculated from the official <a href="{{checkpoint_times_url}}">checkpoint times</a> available from the race site. We value feedback on the site but please raise any issues found with the data itself with the race organisers.</p>
-    <p>View results for <a href="graph#bn={{ top_crews|join:","|urlencode }}">top crews</a> (roughly sub-20 hours)</p>
+        <button type="button" class="btn btn-primary btn-lg" id="submit-btn">Show Graph &raquo;</button>
+    </div>
+</div>
+<p>The DW Graph gives an indication of overnight and four-day crews' relative performances over the course of the <a href="http://www.dwrace.org.uk/">Devizes to Westminster Race</a>, using a graphical display. The data displayed is calculated from the official <a href="{{checkpoint_times_url}}">checkpoint times</a> available from the race site. We value feedback on the site but please raise any issues found with the data itself with the race organisers.</p>
+<p>View results for <a href="graph#bn={{ top_crews|join:","|urlencode }}">top crews</a> (roughly sub-20 hours)</p>
+
 <script>
+const input = document.getElementById('search-input');
+const list = document.getElementById('autocomplete-list');
+let debounceTimer, currentResults = [];
+
 function formatLabel(result) {
-    var crew = result.crew, names = crew[0].firstname + " " + crew[0].surname;
-    if (crew.length > 1) {
-        names += " & " + crew[1].firstname + " " + crew[1].surname;
-    }
-    return result.boat_number + " " + names;
+    const crew = result.crew;
+    let names = crew[0].firstname + ' ' + crew[0].surname;
+    if (crew.length > 1) names += ' & ' + crew[1].firstname + ' ' + crew[1].surname;
+    return result.boat_number + ' ' + names;
 }
-// Create a YUI sandbox on your page.
-YUI().use('node', 'event', 'event-key', 'autocomplete', 'highlight', function (Y) {
-    function loadGraph(e) {
-        var bn = e.result ? e.result.text : Y.one("input").get("value");
-        if (bn) {
-            window.location = window.location.protocol + "//" + window.location.host + "/graph#bn=" + bn;
-        }
-    }
-    function formatResults(query, results) {
-        return Y.Array.map(results, function (result) {
-            return '<div>' + Y.Highlight.all(formatLabel(result.raw), query) + '</div>';
+
+function navigateToGraph(bn) {
+    if (bn) window.location = '/graph#bn=' + encodeURIComponent(bn);
+}
+
+function showSuggestions(results) {
+    currentResults = results;
+    list.innerHTML = '';
+    if (!results.length) { list.style.display = 'none'; return; }
+    results.forEach(result => {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.className = 'dropdown-item';
+        a.href = '#';
+        a.textContent = formatLabel(result);
+        a.addEventListener('mousedown', e => {
+            e.preventDefault();
+            navigateToGraph(result.boat_number);
         });
-    }
-    Y.one("input").focus();
-    Y.one("input").on("key", function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        loadGraph(e);
-    }, 'enter');
-    Y.one("#submit-btn").on("click", function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        loadGraph(e);
+        li.appendChild(a);
+        list.appendChild(li);
     });
-    Y.one('input').plug(Y.Plugin.AutoComplete, {
-        source: '/crewdata?q={query}&callback={callback}&y={{ current_year }}',
-        resultListLocator: 'results',
-        resultTextLocator: function(crew) {
-            return crew.boat_number;
-        },
-        resultFormatter: formatResults
-    });
-    Y.one('input').ac.on('select', loadGraph);
-    Y.one('body').addClass('yui3-skin-sam');
+    list.style.display = 'block';
+}
+
+async function fetchSuggestions(query) {
+    const res = await fetch('/crewdata?q=' + encodeURIComponent(query) + '&y={{ current_year }}');
+    const data = await res.json();
+    showSuggestions(data.results);
+}
+
+input.addEventListener('input', function () {
+    clearTimeout(debounceTimer);
+    const query = this.value.trim();
+    if (query.length < 3) { list.style.display = 'none'; return; }
+    debounceTimer = setTimeout(() => fetchSuggestions(query), 200);
 });
+
+input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        list.style.display = 'none';
+        navigateToGraph(this.value.trim());
+    }
+});
+
+input.addEventListener('blur', () => { list.style.display = 'none'; });
+
+document.getElementById('submit-btn').addEventListener('click', () => {
+    navigateToGraph(input.value.trim());
+});
+
+input.focus();
 </script>
 {% endblock content %}
