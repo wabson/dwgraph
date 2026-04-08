@@ -2,7 +2,7 @@
 
 import os
 
-DEBUG = True
+DEBUG = False
 PROJECT_PATH = os.path.abspath(os.path.dirname(__file__))
 
 ADMINS = (
