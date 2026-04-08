@@ -1,5 +1,4 @@
-from django.shortcuts import render_to_response, redirect
-from django.template import RequestContext
+from django.shortcuts import render, redirect
 from django.http import HttpResponse, Http404
 import json
 import re
@@ -18,14 +17,14 @@ except Exception as e:
 def home(request):
     top_crews = [371, 429, 377, 408, 410, 417, 434, 304, 447, 357 ]
     checkpoint_times_url = 'http://results.dwrace.co.uk/results/%s/Progress/LocationOvernight.html' % (this_year,)
-    return render_to_response('graph/index.html', {'current_year': this_year, 'year': this_year, 'last_year': last_year, 'archives': archives, 'top_crews': top_crews, 'checkpoint_times_url': checkpoint_times_url}, context_instance=RequestContext(request))
+    return render(request, 'graph/index.html', {'current_year': this_year, 'year': this_year, 'last_year': last_year, 'archives': archives, 'top_crews': top_crews, 'checkpoint_times_url': checkpoint_times_url})
 
 def graph(request):
-    return render_to_response('graph/graph.html', {'current_year': this_year, 'year': this_year, 'last_year': last_year, 'archives': archives}, context_instance=RequestContext(request))
+    return render(request, 'graph/graph.html', {'current_year': this_year, 'year': this_year, 'last_year': last_year, 'archives': archives})
 
 def graph_archive(request):
     current_year = int(request.path[1:]) # Strip off initial '/'
-    return render_to_response('graph/graph.html', {'current_year': current_year, 'year': this_year, 'last_year': last_year, 'archives': archives}, context_instance=RequestContext(request))
+    return render(request, 'graph/graph.html', {'current_year': current_year, 'year': this_year, 'last_year': last_year, 'archives': archives})
 
 locations = ['devizes', 'pewsey', 'hford', 'newbury', 'aldermaston', 'reading', 'marsh', 'marlow', 'bray', 'windsor', 'shepperton', 'teddington', 'westminster']
 

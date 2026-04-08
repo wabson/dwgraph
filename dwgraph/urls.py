@@ -1,21 +1,10 @@
-from django.conf.urls import patterns, include, url
+from django.urls import path, re_path
+import graph.views
 
-# Uncomment the next two lines to enable the admin:
-# from django.contrib import admin
-# admin.autodiscover()
-
-urlpatterns = patterns('',
-    # Examples:
-    url(r'^$', 'graph.views.home', name='home'),
-    url(r'^graph$', 'graph.views.graph', name='graph'),
-    url(r'^\d{4}$', 'graph.views.graph_archive', name='graph_archive'),
-    url(r'^data$', 'graph.views.data', name='data'),
-    url(r'^crewdata$', 'graph.views.crew_data', name='crew_data'),
-    # url(r'^dwgraph/', include('dwgraph.foo.urls')),
-
-    # Uncomment the admin/doc line below to enable admin documentation:
-    # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
-
-    # Uncomment the next line to enable the admin:
-    # url(r'^admin/', include(admin.site.urls)),
-)
+urlpatterns = [
+    path('', graph.views.home, name='home'),
+    path('graph', graph.views.graph, name='graph'),
+    re_path(r'^\d{4}$', graph.views.graph_archive, name='graph_archive'),
+    path('data', graph.views.data, name='data'),
+    path('crewdata', graph.views.crew_data, name='crew_data'),
+]
